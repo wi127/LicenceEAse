@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EUserRole {
+  USER
+  ADMIN
+  UNKNOWN
+}
+
+enum EUserStatus {
+    ACTIVE 
+    INACTIVE
+    BANNED
+}
+
+model User {
+    id    String @id @default(uuid()) @db.Uuid()
+    email String @unique 
+    username  String
+    password String
+    isOAuth     Boolean @default(false)
+    status EUserStatus
+    role  EUserRole @default(UNKNOWN)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    profile Profile?
+    Company Company[]
+    Account Account[]
+    Payment Payment[]
+    Notification Notification[]
+}
+
+model Account {
+     id                 String  @id @default(uuid()) @db.Uuid()
+     userId             String  @db.Uuid()
+     provider           String
+     providerAccountId  String
+     refreshToken       String?
+     accessToken        String?
+     accessTokenExpires DateTime?
+     user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+     @@unique([provider, providerAccountId])
+}
+
+
+model Profile{
+    id      String   @id @default(uuid()) @db.Uuid()
+    userId  String   @unique @db.Uuid()
+    user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    fullname String
+    phone    String
+    address  String
+    nationalId String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+}
+
+model Company {
+    id        String   @id @default(uuid()) @db.Uuid()
+    name      String
+    country   String
+    TIN       String   @unique()
+    clientId  String   @db.Uuid()
+    client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    LicenseApplication LicenseApplication[]
+    License License[]
+}
+
+model License {
+    id        String   @id @default(uuid()) @db.Uuid()
+    name      String
+    processingTime Int
+    applicationFee Float
+    licenseFee    Float
+    validityMonths Int
+    companyId String   @db.Uuid()
+    company   Company  @relation(fields: [companyId], references: [id])
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    LicenseApplication LicenseApplication[]
+}
+
+model RequiredDocument {
+  id          String   @id @default(uuid()) @db.Uuid()
+  name        String   
+  description String?
+  createdAt   DateTime @default(now())
+
+  ApplicationDocument ApplicationDocument[]
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model LicenseApplication {
+  id            String   @id @default(uuid()) @db.Uuid()
+  companyId     String   @db.Uuid()
+  company       Company  @relation(fields: [companyId], references: [id])
+  licenseTypeId String   @db.Uuid()
+  licenseType   License  @relation(fields: [licenseTypeId], references: [id])
+  status        ApplicationStatus @default(PENDING)
+  submittedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  documents     ApplicationDocument[]
+  payment       Payment?
+
+}
+
+
+model ApplicationDocument {
+  id               String @id @default(uuid()) @db.Uuid()
+  applicationId    String @db.Uuid()
+  application      LicenseApplication @relation(fields: [applicationId], references: [id])
+  documentId       String @db.Uuid()
+  document         RequiredDocument   @relation(fields: [documentId], references: [id])
+  fileUrl          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([applicationId, documentId])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model Payment {
+  id              String   @id @default(uuid()) @db.Uuid()
+  userId          String   @db.Uuid()
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId   String   @unique @db.Uuid()
+  application     LicenseApplication @relation(fields: [applicationId], references: [id])
+  amount          Float
+  paidAt          DateTime @default(now())
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum ENotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+enum ENotificationType {
+  LICENSE_APPLICATION
+  PAYMENT_STATUS
+  SYSTEM
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid()
+  userId    String   @db.Uuid()
+  user      User     @relation(fields: [userId], references: [id])
+  type      ENotificationType
+  status    ENotificationStatus @default(UNREAD)
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum EAppSettingType {
+  PASSWORD_RESET
+  EMAIL_VERIFICATION
+  ACCOUNT_VERIFICATION
+  ACCOUNT_DELETION
+}
+
+model AppSetting {
+  id String @id @default(uuid()) @db.Uuid()
+  type EAppSettingType
+  value Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([createdAt])
+}
