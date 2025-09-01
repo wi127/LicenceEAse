@@ -28,6 +28,7 @@ model User {
     isOAuth     Boolean @default(false)
     status EUserStatus
     role  EUserRole @default(UNKNOWN)
+    image  String?
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
@@ -65,13 +66,27 @@ model Profile{
 
 }
 
+
+enum ELegalType {
+  COMPANY_LTD
+  CORPORATION
+  PARTNERSHIP
+  SOLE_PROPRIETORSHIP
+  COOPERATIVE
+  NON_GOVERNMENTAL_ORGANIZATION
+}
+
 model Company {
     id        String   @id @default(uuid()) @db.Uuid()
     name      String
     country   String
+    address   String
+    emailCompany String
+    legalType ELegalType @default(COMPANY_LTD)
+    phone     String
     TIN       String   @unique()
-    clientId  String   @db.Uuid()
-    client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    operatorId  String   @db.Uuid()
+    operator  User     @relation(fields: [operatorId], references: [id], onDelete: Cascade)
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
@@ -99,6 +114,7 @@ model RequiredDocument {
   name        String   
   description String?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   ApplicationDocument ApplicationDocument[]
 }

@@ -3,90 +3,142 @@
 import React, { useState, useRef } from 'react'
 import { Camera, Save, Edit2, Mail, Phone, MapPin, User, Building } from 'lucide-react'
 import CompanyRepresentativesTab from './CompanyRepresentativesTab'
+import { ELegalType } from '@prisma/client'
 
 interface Representative {
   id: string
-  fullName: string
-  idPassport: string
+  fullname: string
   telephone: string
-  email: string
+  address: string
+  nationalId: string
   communicationLanguage: string
-  role: string
+  status: string
+}
+
+interface UserInfo {
+  id: string
+  fullname: string
+  phone: string
+  address: string
+  nationalId: string
+  user:{
+    id: string
+    email: string
+    image?: string
+    username?: string
+    status?: string
+  }
 }
 
 interface CompanyInfo {
-  companyName: string
-  nationality: string
-  legalType: string
-  idType: string
-  identificationNumber: string
-  address: string
-  poBox: string
-  fax: string
-  telephone: string
-  email: string
-  creationDate: string
+  name: string
+  country: string
+  TIN: string
+  legalType: ELegalType
+  address: string | null
+  phone: string | null
+  emailCompany: string | null
+  createdAt: string
 }
+
+export const DEFAULT_USER_PROFILE: UserInfo = {
+  id: '',
+  fullname: '',
+  phone: '',
+  address: '',
+  nationalId: '',
+  user:{
+    id: '',
+    email: '',
+    image: '',
+    username: ''
+  }
+};
+
+export const DEFAULT_COMPANY_INFO: CompanyInfo = {
+  name: '',
+  country: '',
+  TIN: '',
+  legalType: 'COMPANY_LTD' as ELegalType,
+  address: '',
+  phone: '',
+  emailCompany: '',
+  createdAt: ''
+};
 
 interface ProfileTabProps {
-  userProfile: {
-    name: string
-    email: string
-    phone?: string
-    address?: string
-    profilePicture?: string
-    company?: string
-  }
-  onUpdateProfile: (profile: any) => void
+    userProfile: UserInfo | null
+    company: CompanyInfo  | null
+    companyId: string
+    profileId: string
+    onUpdateProfile: (profile: any) => void
 }
 
-export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabProps) {
+export default function ProfileTab({ userProfile, company, companyId, profileId, onUpdateProfile }: ProfileTabProps) {
   const [activeSubTab, setActiveSubTab] = useState('personal')
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
-    name: userProfile.name || '',
-    email: userProfile.email || '',
-    phone: userProfile.phone || '',
-    address: userProfile.address || '',
-    profilePicture: userProfile.profilePicture || ''
+    id: userProfile?.id || profileId || '',
+    fullname: userProfile?.fullname || '',
+    email: userProfile?.user.email || '',
+    phone: userProfile?.phone || '',
+    address: userProfile?.address || '',
+    image: userProfile?.user.image || '',
+    user: {
+      id: userProfile?.user.id || '',
+      email: userProfile?.user.email || '',
+      image: userProfile?.user.image || '',
+      username: userProfile?.user.username || ''
+    }
   })
   const [message, setMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Company and representatives state
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
-    companyName: userProfile.company || '',
-    nationality: '',
-    legalType: '',
-    idType: '',
-    identificationNumber: '',
-    address: userProfile.address || '',
-    poBox: '',
-    fax: '',
-    telephone: userProfile.phone || '',
-    email: userProfile.email || '',
-    creationDate: ''
+    name: company?.name || '',
+    country: company?.country || '',
+    TIN: company?.TIN || '',
+    address: company?.address || '',
+    phone: company?.phone || '',
+    legalType: company?.legalType || 'COMPANY_LTD' as ELegalType,
+    emailCompany: company?.emailCompany || '',
+    createdAt: company?.createdAt || ''
   })
   const [representatives, setRepresentatives] = useState<Representative[]>([
     // Sample representative for demo
     {
-      id: '1',
-      fullName: userProfile.name || '',
-      idPassport: '',
-      telephone: userProfile.phone || '',
-      email: userProfile.email || '',
+      id: userProfile?.user.id || '',
+      address: userProfile?.address || '',
+      nationalId: userProfile?.nationalId || '',
+      fullname: userProfile?.fullname || '',
+      telephone: userProfile?.phone || '',
       communicationLanguage: 'English',
-      role: 'Primary Contact'
+      status: 'Primary Contact'
     }
   ])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+  const { name, value } = e.target
+  
+  if (name.startsWith('user.')) {
+    // Handle nested user properties
+    const userField = name.split('.')[1]
+    setFormData(prev => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        [userField]: value
+      }
+    }))
+  } else {
+    // Handle top-level properties
     setFormData(prev => ({
       ...prev,
       [name]: value
     }))
   }
+}
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -96,7 +148,7 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
         const result = e.target?.result as string
         setFormData(prev => ({
           ...prev,
-          profilePicture: result
+          image: result
         }))
       }
       reader.readAsDataURL(file)
@@ -117,23 +169,33 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
 
   const handleCancel = () => {
     setFormData({
-      name: userProfile.name || '',
-      email: userProfile.email || '',
-      phone: userProfile.phone || '',
-      address: userProfile.address || '',
-      profilePicture: userProfile.profilePicture || ''
+    id: userProfile?.id || profileId || '',
+    fullname: userProfile?.fullname || '',
+    email: userProfile?.user.email || '',
+    phone: userProfile?.phone || '',
+    address: userProfile?.address || '',
+    image: userProfile?.user.image || '',
+    user: {
+      id: userProfile?.user.id || '',
+      email: userProfile?.user.email || '',
+      image: userProfile?.user.image || '',
+      username: userProfile?.user.username || ''
+    }
     })
     setIsEditing(false)
   }
 
   const handleUpdateCompany = (info: CompanyInfo) => {
     setCompanyInfo(info)
-    // Also update the main profile with company info
+
     onUpdateProfile({
       ...userProfile,
-      company: info.companyName,
-      phone: info.telephone,
-      email: info.email
+      name: info.name,
+      phone: info.phone,
+      emailCompany: info.emailCompany,
+      country: info.country,
+      TIN: info.TIN,
+      address: info.address
     })
   }
 
@@ -201,9 +263,9 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
           <div className='flex flex-col items-center gap-4'>
             <div className='relative'>
               <div className='w-32 h-32 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden border-4 border-white shadow-lg'>
-                {formData.profilePicture ? (
+                {formData.image ? (
                   <img 
-                    src={formData.profilePicture} 
+                    src={formData.image} 
                     alt="Profile" 
                     className='w-full h-full object-cover'
                   />
@@ -251,13 +313,13 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
                   <input
                     type='text'
                     name='name'
-                    value={formData.name}
+                    value={formData.fullname}
                     onChange={handleInputChange}
                     className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
                     required
                   />
                 ) : (
-                  <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{userProfile.name}</p>
+                  <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{userProfile?.fullname}</p>
                 )}
               </div>
 
@@ -269,14 +331,14 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
                 {isEditing ? (
                   <input
                     type='email'
-                    name='email'
-                    value={formData.email}
+                    name='user.email'
+                    value={formData.user.email}
                     onChange={handleInputChange}
                     className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
                     required
                   />
                 ) : (
-                  <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{userProfile.email}</p>
+                  <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{userProfile?.user.email}</p>
                 )}
               </div>
 
@@ -296,7 +358,7 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
                   />
                 ) : (
                   <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>
-                    {userProfile.phone || 'Not provided'}
+                    {userProfile?.phone || 'Not provided'}
                   </p>
                 )}
               </div>
@@ -317,7 +379,7 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
                   />
                 ) : (
                   <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>
-                    {userProfile.address || 'Not provided'}
+                    {userProfile?.address || 'Not provided'}
                   </p>
                 )}
               </div>
@@ -351,9 +413,14 @@ export default function ProfileTab({ userProfile, onUpdateProfile }: ProfileTabP
         <CompanyRepresentativesTab
           companyInfo={companyInfo}
           representatives={representatives}
+          companyId={companyId}
+          profileId={profileId}
           onUpdateCompany={handleUpdateCompany}
           onUpdateRepresentatives={handleUpdateRepresentatives}
-          userEmail={userProfile.email}
+          user={{
+            email: userProfile?.user.email || '',
+            status: userProfile?.user.status || ''
+          }}
         />
       )}
     </div>

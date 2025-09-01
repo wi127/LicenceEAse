@@ -9,6 +9,8 @@ interface ClientDashboardLayoutProps extends PropsWithChildren {
   onTabChange: (tab: string) => void
   onLogout: () => void
   darkMode: boolean
+  loading: boolean
+  user: { username: string } | null
 }
 
 export default function ClientDashboardLayout({

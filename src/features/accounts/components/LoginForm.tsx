@@ -6,10 +6,9 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '@/firebase'
 import SubmitButton from '@/components/SubmitButton'
 import Link from 'next/link'
+import { signIn } from "next-auth/react"
 
 export default function LoginForm() {
   const router = useRouter()
@@ -25,35 +24,22 @@ export default function LoginForm() {
     setLoading(true)
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const token = await userCredential.user.getIdToken(true) // Force refresh
-
-      // Send token to backend to retrieve role and user info
-      const res = await fetch('http://127.0.0.1:5002/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password
       })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Login failed.')
+      if (res?.error) {
+        setError(res.error || "Login failed.")
+        setLoading(false)
+        return null
       }
 
-      localStorage.setItem('authToken', token) // Store Firebase token, not backend token
-      localStorage.setItem('user', JSON.stringify(data.user))
-
       // Redirect based on user role
-      // if (data.user.role === 'admin') {
-      //   router.push('/admin-dashboard')
-      // } else if (data.user.role === 'client') {
-      //   router.push('/client-dashboard')
-      // } else {
-      //   router.push('/officer-dashboard')
-      // }
+      router.push('/client-dashboard')
     } catch (err: any) {
-      console.error('Login error:', err)
+      console.error("Login error:", err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -95,7 +81,7 @@ export default function LoginForm() {
         </SubmitButton>
         <p className="text-center">
           Don’t have an account?{' '}
-          <Link href="/register" className="text-primary">Register</Link>
+          <Link href="/auth/sign-up" className="text-primary">Register</Link>
         </p>
       </div>
     </form>

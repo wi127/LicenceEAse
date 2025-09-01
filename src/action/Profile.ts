@@ -50,12 +50,22 @@ export const fetchProfiles = cache(async <T extends Prisma.ProfileSelect>(select
      }
 });
 
-export const fetchProfileById = cache(async <T extends Prisma.ProfileSelect>(id:string, selectType: T): Promise<Prisma.ProfileGetPayload<{select:T}> | null> => {
+export const fetchProfileById = cache(async <T extends Prisma.ProfileSelect>(id:string,  selectType: T, userId?: string): Promise<Prisma.ProfileGetPayload<{select:T}> | null> => {
      try {
-          const res= await prisma.profile.findUnique({where:{id},select: selectType});
+          const res= await prisma.profile.findUnique({where:{id, userId},select: selectType});
           return res;
      } catch (error) {
           console.log(`Error fetching Profile data for id: ${id}`, error);
+          return null;
+     }
+});
+
+export const fetchProfileByUserId = cache(async <T extends Prisma.ProfileSelect>(id:string, selectType: T): Promise<Prisma.ProfileGetPayload<{select:T}> | null> => {
+     try {
+          const res= await prisma.profile.findUnique({where:{userId: id},select: selectType});
+          return res;
+     } catch (error) {
+          console.log(`Error fetching Profile data for userId: ${id}`, error);
           return null;
      }
 });

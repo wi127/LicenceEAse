@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
                          id: profile.sub,
                          name: profile.name,
                          email: profile.email,
-                         image: profile.picture,
+                         //image: profile.picture,
                     };
                },
           }),
@@ -81,17 +81,17 @@ export const authOptions: NextAuthOptions = {
      jwt: {
           maxAge: 2 * 60 * 60,
      },
-     cookies: {
-          sessionToken: {
-               name: `next-auth.session-token`,
-               options: {
-                    httpOnly: true, // Prevent JavaScript access
-                    secure: process.env.NODE_ENV === "production", // Use HTTPS in production
-                    sameSite: "lax", // Prevent CSRF attacks
-                    path: "/", // Apply to the whole site
-               },
-          },
-     },
+     // cookies: {
+     //      sessionToken: {
+     //           name: `next-auth.session-token`,
+     //           options: {
+     //                httpOnly: true, // Prevent JavaScript access
+     //                secure: process.env.NODE_ENV === "production", // Use HTTPS in production
+     //                sameSite: "lax", // Prevent CSRF attacks
+     //                path: "/", // Apply to the whole site
+     //           },
+     //      },
+     // },
      callbacks: {
           async signIn({ account, profile }) {
                if (account?.provider === "google" && profile && profile.email) {
@@ -175,6 +175,6 @@ export const authOptions: NextAuthOptions = {
      },
      secret: process.env.NEXTAUTH_SECRET , // new Date().getMonth()  Changes monthly
      pages: {
-          signIn: "/auth/login",
+          signIn: "/auth/sign-in",
      },
 };

@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "public"."ELegalType" AS ENUM ('COMPANY_LTD', 'CORPORATION', 'PARTNERSHIP', 'SOLE_PROPRIETORSHIP', 'COOPERATIVE', 'NON_GOVERNMENTAL_ORGANIZATION');
+
+-- AlterTable
+ALTER TABLE "public"."Company" ADD COLUMN     "legalType" "public"."ELegalType" DEFAULT 'COMPANY_LTD';

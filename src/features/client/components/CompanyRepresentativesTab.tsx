@@ -4,45 +4,54 @@ import React, { useState } from 'react'
 import { Building, User, Plus, Edit2, Trash2, Save, X } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { updateCompany } from '@/action/Company'
+import { createProfile, deleteProfile } from '@/action/Profile'
+import { ELegalType } from '@prisma/client'
 
 interface Representative {
   id: string
-  fullName: string
-  idPassport: string
+  fullname: string
   telephone: string
-  email: string
+  address: string
+  nationalId: string
   communicationLanguage: string
-  role: string
+  status: string
+}
+
+interface User {
+  email: string
+  status: string
 }
 
 interface CompanyInfo {
-  companyName: string
-  nationality: string
-  legalType: string
-  idType: string
-  identificationNumber: string
-  address: string
-  poBox: string
-  fax: string
-  telephone: string
-  email: string
-  creationDate: string
-}
+    name: string
+    country: string
+    TIN: string
+    legalType: ELegalType
+    address: string | null
+    phone: string | null
+    emailCompany: string | null
+    createdAt: string
+  }
 
 interface CompanyRepresentativesTabProps {
   companyInfo: CompanyInfo
+  user: User
   representatives: Representative[]
   onUpdateCompany: (info: CompanyInfo) => void
   onUpdateRepresentatives: (reps: Representative[]) => void
-  userEmail?: string
+  companyId: string
+  profileId: string
 }
 
 export default function CompanyRepresentativesTab({
   companyInfo,
   representatives,
+  user, 
   onUpdateCompany,
   onUpdateRepresentatives,
-  userEmail
+  companyId,
+  profileId
 }: CompanyRepresentativesTabProps) {
   const [isEditingCompany, setIsEditingCompany] = useState(false)
   const [isAddingRep, setIsAddingRep] = useState(false)
@@ -50,13 +59,15 @@ export default function CompanyRepresentativesTab({
   const [message, setMessage] = useState('')
 
   const [companyFormData, setCompanyFormData] = useState<CompanyInfo>(companyInfo)
+  const [userFormData, setUserFormData] = useState<User>(user)
   const [newRepFormData, setNewRepFormData] = useState({
-    fullName: '',
-    idPassport: '',
+    id: '',
+    fullname: '',
+    nationalId: '',
     telephone: '',
-    email: '',
+    address: '',
     communicationLanguage: 'English',
-    role: 'Representative'
+    status: ''
   })
 
   const handleCompanyInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -77,30 +88,27 @@ export default function CompanyRepresentativesTab({
 
   const handleSaveCompany = async () => {
     try {
+      
+      const payload = {
+        ...companyFormData,
+        address: companyFormData.address || '',
+        phone: companyFormData.phone || '',
+        emailCompany: companyFormData.emailCompany || '',
+        }
       // Save to backend
-      const response = await fetch('http://127.0.0.1:5002/companies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          companyInfo: companyFormData,
-          representatives: representatives,
-          userEmail: userEmail
-        })
-      })
+      const res = await updateCompany(companyId, payload)
 
-      if (!response.ok) {
+      if (!res) {
         throw new Error('Failed to save company information')
       }
 
       onUpdateCompany(companyFormData)
       setIsEditingCompany(false)
-      setMessage('✅ Company information saved successfully!')
+      setMessage('Company information saved successfully!')
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
       console.error('Error saving company:', error)
-      setMessage('❌ Failed to save company information. Please try again.')
+      setMessage('Failed to save company information. Please try again.')
       setTimeout(() => setMessage(''), 3000)
     }
   }
@@ -111,14 +119,13 @@ export default function CompanyRepresentativesTab({
   }
 
   const handleAddRepresentative = async () => {
-    if (!newRepFormData.fullName || !newRepFormData.email || !newRepFormData.telephone) {
-      setMessage('❌ Please fill in all required fields for the representative.')
+    if (!newRepFormData.fullname || !userFormData.email || !newRepFormData.telephone) {
+      setMessage('Please fill in all required fields for the representative.')
       setTimeout(() => setMessage(''), 3000)
       return
     }
 
     const newRep: Representative = {
-      id: Date.now().toString(),
       ...newRepFormData
     }
 
@@ -126,44 +133,48 @@ export default function CompanyRepresentativesTab({
 
     try {
       // Save to backend
-      const response = await fetch('http://127.0.0.1:5002/companies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          companyInfo: companyFormData,
-          representatives: updatedReps,
-          userEmail: userEmail
-        })
+      const res = await createProfile({
+        fullname: newRepFormData.fullname,
+        phone: newRepFormData.telephone,
+        address: newRepFormData.address,
+        nationalId: newRepFormData.nationalId,
+        user: {
+          connect: {
+            email: userFormData.email,
+          }
+        }
       })
 
-      if (!response.ok) {
+      if (!res) {
         throw new Error('Failed to save representative')
       }
 
       onUpdateRepresentatives(updatedReps)
       setNewRepFormData({
-        fullName: '',
-        idPassport: '',
+        id: '',
+        fullname: '',
+        nationalId: '',
         telephone: '',
-        email: '',
+        address: '',
         communicationLanguage: 'English',
-        role: 'Representative'
+        status: ''
       })
       setIsAddingRep(false)
-      setMessage('✅ Representative added successfully!')
+      setMessage('Representative added successfully!')
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
       console.error('Error saving representative:', error)
-      setMessage('❌ Failed to save representative. Please try again.')
+      setMessage('Failed to save representative. Please try again.')
       setTimeout(() => setMessage(''), 3000)
     }
   }
 
-  const handleDeleteRepresentative = (id: string) => {
-    onUpdateRepresentatives(representatives.filter(rep => rep.id !== id))
-    setMessage('✅ Representative removed successfully!')
+  const handleDeleteRepresentative = async () => {
+    const res = await deleteProfile(profileId)
+    if (!res) {
+      throw new Error('Failed to delete representative')
+    }
+    setMessage('Representative removed successfully!')
     setTimeout(() => setMessage(''), 3000)
   }
 
@@ -199,14 +210,14 @@ export default function CompanyRepresentativesTab({
             {isEditingCompany ? (
               <input
                 type="text"
-                name="companyName"
-                value={companyFormData.companyName}
+                name="name"
+                value={companyFormData.name}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
                 required
               />
             ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.companyName || 'Not provided'}</p>
+              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.name || 'Not provided'}</p>
             )}
           </div>
 
@@ -215,7 +226,7 @@ export default function CompanyRepresentativesTab({
             {isEditingCompany ? (
               <select
                 name="nationality"
-                value={companyFormData.nationality}
+                value={companyFormData.country}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
               >
@@ -227,7 +238,7 @@ export default function CompanyRepresentativesTab({
                 <option value="other">Other</option>
               </select>
             ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.nationality || 'Not provided'}</p>
+              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.country || 'Not provided'}</p>
             )}
           </div>
 
@@ -241,16 +252,19 @@ export default function CompanyRepresentativesTab({
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
               >
                 <option value="">Select legal type</option>
-                <option value="limited_company">Limited Company</option>
-                <option value="corporation">Corporation</option>
-                <option value="partnership">Partnership</option>
-                <option value="sole_proprietorship">Sole Proprietorship</option>
-                <option value="cooperative">Cooperative</option>
-                <option value="ngo">Non-Governmental Organization</option>
-                <option value="other">Other</option>
+                {Object.entries(ELegalType).map(([key, value]) => (
+                  <option key={value} value={value}>
+                    {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  </option>
+                ))}
               </select>
             ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.legalType || 'Not provided'}</p>
+              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>
+                {companyFormData.legalType ? 
+                  companyFormData.legalType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                  : 'Not provided'
+                }
+              </p>
             )}
           </div>
 
@@ -260,12 +274,12 @@ export default function CompanyRepresentativesTab({
               <input
                 type="text"
                 name="identificationNumber"
-                value={companyFormData.identificationNumber}
+                value={companyFormData.TIN}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
               />
             ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.identificationNumber || 'Not provided'}</p>
+              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.TIN || 'Not provided'}</p>
             )}
           </div>
 
@@ -275,7 +289,7 @@ export default function CompanyRepresentativesTab({
               <input
                 type="text"
                 name="address"
-                value={companyFormData.address}
+                value={companyFormData.address || ''}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
               />
@@ -290,12 +304,12 @@ export default function CompanyRepresentativesTab({
               <input
                 type="tel"
                 name="telephone"
-                value={companyFormData.telephone}
+                value={companyFormData.phone || ''}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
               />
             ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.telephone || 'Not provided'}</p>
+              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.phone || 'Not provided'}</p>
             )}
           </div>
 
@@ -305,12 +319,12 @@ export default function CompanyRepresentativesTab({
               <input
                 type="email"
                 name="email"
-                value={companyFormData.email}
+                value={companyFormData.emailCompany || ''}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
               />
             ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.email || 'Not provided'}</p>
+              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.emailCompany || 'Not provided'}</p>
             )}
           </div>
 
@@ -320,12 +334,12 @@ export default function CompanyRepresentativesTab({
               <input
                 type="date"
                 name="creationDate"
-                value={companyFormData.creationDate}
+                value={companyFormData.createdAt}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
               />
             ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.creationDate || 'Not provided'}</p>
+              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.createdAt || 'Not provided'}</p>
             )}
           </div>
         </div>
@@ -376,18 +390,18 @@ export default function CompanyRepresentativesTab({
                 <input
                   type="text"
                   name="fullName"
-                  value={newRepFormData.fullName}
+                  value={newRepFormData.fullname}
                   onChange={handleRepInputChange}
                   className='w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500'
                   required
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium mb-2'>ID/Passport</label>
+                <label className='block text-sm font-medium mb-2'>ID/Passport *</label>
                 <input
                   type="text"
-                  name="idPassport"
-                  value={newRepFormData.idPassport}
+                  name="nationalId"
+                  value={newRepFormData.nationalId}
                   onChange={handleRepInputChange}
                   className='w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500'
                 />
@@ -408,7 +422,7 @@ export default function CompanyRepresentativesTab({
                 <input
                   type="email"
                   name="email"
-                  value={newRepFormData.email}
+                  value={userFormData.email}
                   onChange={handleRepInputChange}
                   className='w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500'
                   required
@@ -433,7 +447,7 @@ export default function CompanyRepresentativesTab({
                 <input
                   type="text"
                   name="role"
-                  value={newRepFormData.role}
+                  value={newRepFormData.status}
                   onChange={handleRepInputChange}
                   className='w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500'
                 />
@@ -473,26 +487,25 @@ export default function CompanyRepresentativesTab({
                 <TableRow key={rep.id}>
                   <TableCell>
                     <div>
-                      <div className='font-medium'>{rep.fullName}</div>
-                      <div className='text-sm text-muted-foreground'>{rep.idPassport}</div>
+                      <div className='font-medium'>{rep.fullname}</div>
+                      <div className='text-sm text-muted-foreground'>{rep.nationalId}</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
                       <div className='font-medium'>{rep.telephone}</div>
-                      <div className='text-sm text-muted-foreground'>{rep.email}</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{rep.communicationLanguage}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{rep.role}</Badge>
+                    <Badge variant="secondary">{rep.status}</Badge>
                   </TableCell>
                   <TableCell>
                     <div className='flex gap-2'>
                       <button
-                        onClick={() => handleDeleteRepresentative(rep.id)}
+                        onClick={() => handleDeleteRepresentative()}
                         className='text-red-600 hover:text-red-800 p-1'
                         title="Remove representative"
                       >

@@ -2,7 +2,8 @@ import { Prisma } from "@prisma/client";
 
 export const SessionUserSelect = {
     id:true,
-    email:true, 
+    email:true,
+    username: true, 
     role:true, 
     status:true,
     profile: {select: {id:true, fullname:true}},

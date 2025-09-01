@@ -1,28 +1,32 @@
-// ─────────────────────────────────────────────────────────────────
-// src/features/accounts/components/RegisterForm.tsx
-// ─────────────────────────────────────────────────────────────────
-
 'use client'
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { auth } from '@/firebase'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
 import SubmitButton from '@/components/SubmitButton'
 import Link from 'next/link'
+import { createUser } from '@/action/User'
+import { createProfile } from '@/action/Profile'
+import { createCompany } from '@/action/Company'
 
 export default function RegisterForm() {
   const router = useRouter()
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [company, setCompany] = useState('')
+  const [username, setUsername] = useState('')
+  const [companyName, setCompanyName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
+  const [tin, setTin] = useState('')
+  const [address, setAddress] = useState('')
+  const [country, setCountry] = useState('')
+  const [nationalId, setNationalId] = useState('')
   const [password, setPassword] = useState('')
   const [password2, setPassword2] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,27 +34,54 @@ export default function RegisterForm() {
     setError('')
     setSuccess('')
 
-    if (password !== password2) {
+    setLoading(true)
+    try {
+      if (password !== password2) {
       setError('Passwords do not match.')
       return
     }
 
-    setLoading(true)
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      const token = await userCredential.user.getIdToken()
-      const uid = userCredential.user.uid
-
-      // Send UID and role to backend to assign default role
-      const res = await fetch('http://127.0.0.1:5002/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, role: 'client' }) // default role
+      const userRes = await createUser({
+        username: username,
+        email: email,
+        password: password,
+        isOAuth: false,
+        role: 'USER', 
+        status: 'ACTIVE',
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to assign role')
+      if (!userRes.success) {
+        throw new Error(userRes.error || 'Failed to register user')
+      }
+
+      if (!userRes.data || !userRes.data.id) {
+        throw new Error('User data is missing after registration');
+      }
+      const profileRes = await createProfile({
+        fullname: `${firstName} ${lastName}`,
+        phone: phone,
+        address: address,
+        nationalId: nationalId,
+        user: {
+          connect: { id: userRes.data.id }
+        }
+      })
+
+      if (!profileRes.success) {
+        throw new Error(profileRes.error || 'Failed to create profile')
+      }
+
+      const companyRes = await createCompany({
+        name: companyName,
+        TIN: tin,
+        country: country,
+        operator: {
+          connect: { id: userRes.data.id }
+        }
+      })
+
+      if (!companyRes.success) {
+        throw new Error(companyRes.error || 'Failed to create company')
       }
 
       setSuccess('Registration successful! Redirecting...')
@@ -89,15 +120,48 @@ export default function RegisterForm() {
               required
             />
           </div>
+          <div className="grid gap-1">
+          <label htmlFor="username" className="primary">Username</label>
+          <input
+            id="username"
+            type="text"
+            className="primary"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
         </div>
         <div className="grid gap-1">
-          <label htmlFor="company" className="primary">Company</label>
+          <label htmlFor="email" className="primary">Email address</label>
+          <input
+            id="email"
+            type="email"
+            className="primary"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        </div>
+        <div className="grid gap-1">
+          <label htmlFor="company" className="primary">Company Name</label>
           <input
             id="company"
             type="text"
             className="primary"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="grid gap-1">
+          <label htmlFor="tin" className="primary">TIN</label>
+          <input
+            id="tin"
+            type="text"
+            className="primary"
+            value={tin}
+            onChange={(e) => setTin(e.target.value)}
             required
           />
         </div>
@@ -114,37 +178,72 @@ export default function RegisterForm() {
           />
         </div>
         <div className="grid gap-1">
-          <label htmlFor="email" className="primary">Email address</label>
+          <label htmlFor="address" className="primary">Address</label>
           <input
-            id="email"
-            type="email"
+            id="address"
+            type="text"
             className="primary"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
             required
           />
         </div>
         <div className="grid gap-1">
+          <label htmlFor="nationalId" className="primary">National ID</label>
+          <input
+            id="nationalId"
+            type="text"
+            className="primary"
+            onChange={(e) => setNationalId(e.target.value)}
+            required
+          />
+        </div>
+        <div className="grid gap-1">
+          <label htmlFor="country" className="primary">Country</label>
+          <input
+            id="country"
+            type="text"
+            className="primary"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            required
+          />
+        </div>
+        <div className="grid gap-1 relative">
           <label htmlFor="password" className="primary">Password</label>
           <input
             id="password"
-            type="password"
-            className="primary"
+            type={showPassword ? "text" : "password"}
+            className="primary pr-10"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-2 top-8 text-sm text-gray-600 hover:text-black"
+        >
+          {showPassword ? "Hide" : "Show"}
+        </button>
         </div>
         <div className="grid gap-1">
           <label htmlFor="password2" className="primary">Confirm password</label>
           <input
             id="password2"
-            type="password"
-            className="primary"
+            type={showPassword2 ? "text" : "password"}
+            className="primary pr-10"
             value={password2}
             onChange={(e) => setPassword2(e.target.value)}
             required
           />
+          <button
+          type="button"
+          onClick={() => setShowPassword2(!showPassword2)}
+          className="absolute right-2 top-8 text-sm text-gray-600 hover:text-black"
+        >
+          {showPassword2 ? "Hide" : "Show"}
+        </button>
         </div>
       </div>
 
@@ -157,7 +256,7 @@ export default function RegisterForm() {
         </SubmitButton>
         <p className="text-center">
           Already have an account?{' '}
-          <Link href="/login" className="text-primary">Login</Link>
+          <Link href="/auth/sign-in" className="text-primary">Login</Link>
         </p>
       </div>
     </form>

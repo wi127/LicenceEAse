@@ -59,3 +59,24 @@ export const fetchCompanyById = cache(async <T extends Prisma.CompanySelect>(id:
           return null;
      }
 });
+
+
+export const fetchCompanyByOperator = cache(async <T extends Prisma.CompanySelect>(operatorId:string, selectType: T): Promise<Prisma.CompanyGetPayload<{select:T}> | null> => {
+     try {
+          const res= await prisma.company.findFirst({where:{operatorId},select: selectType});
+          return res;
+     } catch (error) {
+          console.log(`Error fetching Company data for operatorId: ${operatorId}`, error);
+          return null;
+     }
+});
+
+export const fetchCompanyByUserId = cache(async <T extends Prisma.CompanySelect>(id: string, selectType: T): Promise<Prisma.CompanyGetPayload<{ select: T }>[]> => {
+  try {
+    const res = await prisma.company.findMany({ where: { operatorId: id }, select: selectType })
+    return res
+  } catch (error) {
+    console.log(`Error fetching Company data for id: ${id}`, error)
+    return []
+  }
+})

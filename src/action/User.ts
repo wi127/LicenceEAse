@@ -5,11 +5,13 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { RevalidatePages } from "./RevalidatePage";
 import { cache } from "react";
-import { encryptPassword } from "../util/bcryptFuncs";
+import { encryptPassword, verifyPassword } from "../util/bcryptFuncs";
 import { ESessionFetchMode } from "@/common/enums";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "@/common/authOptions";
 import { SessionUserSelect, TSessionUserSelect } from "@/lib/types/session";
+import { cookies } from "next/headers"
+
 
 export async function createUser(data: Prisma.UserCreateInput) {
   try {
@@ -90,6 +92,7 @@ export async function getSessionUser (mode: ESessionFetchMode=ESessionFetchMode.
     if(!sessionUser) return {user:null, session};
     if (!sessionUser.email) return {user:null, session: session};
     const user = await fetchUserByEmail(sessionUser.email, SessionUserSelect);
-
+    
+    
     return {user, session};
 }
