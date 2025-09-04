@@ -113,6 +113,7 @@ model RequiredDocument {
   id          String   @id @default(uuid()) @db.Uuid()
   name        String   
   description String?
+  file        Bytes
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -147,7 +148,6 @@ model ApplicationDocument {
   application      LicenseApplication @relation(fields: [applicationId], references: [id])
   documentId       String @db.Uuid()
   document         RequiredDocument   @relation(fields: [documentId], references: [id])
-  fileUrl          String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
