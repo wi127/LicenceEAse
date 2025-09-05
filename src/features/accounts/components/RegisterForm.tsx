@@ -22,6 +22,7 @@ export default function RegisterForm() {
   const [country, setCountry] = useState('')
   const [nationalId, setNationalId] = useState('')
   const [password, setPassword] = useState('')
+  const [emailCompany, setEmailCompany] = useState('')
   const [password2, setPassword2] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -75,6 +76,9 @@ export default function RegisterForm() {
         name: companyName,
         TIN: tin,
         country: country,
+        address: address,
+        emailCompany: email,
+        phone: phone,
         operator: {
           connect: { id: userRes.data.id }
         }
@@ -85,7 +89,7 @@ export default function RegisterForm() {
       }
 
       setSuccess('Registration successful! Redirecting...')
-      setTimeout(() => router.push('/login'), 1500)
+      setTimeout(() => router.push('/client-dashboard'), 1500)
     } catch (err: any) {
       console.error(err)
       setError(err.message)
@@ -151,6 +155,17 @@ export default function RegisterForm() {
             className="primary"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="grid gap-1">
+          <label htmlFor="company" className="primary">Company Email</label>
+          <input
+            id="emailCompany"
+            type="email"
+            className="primary"
+            value={emailCompany}
+            onChange={(e) => setEmailCompany(e.target.value)}
             required
           />
         </div>
