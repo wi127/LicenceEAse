@@ -26,7 +26,7 @@ export async function createUser(data: Prisma.UserCreateInput) {
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating user: ", error);
-    return { success: false, error: "An unexpected error occurred." };
+    return { success: false, error: "An unexpected error occurred while creating user." };
   }
 }
 

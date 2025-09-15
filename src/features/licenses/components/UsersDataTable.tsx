@@ -9,79 +9,62 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { fetchUsers } from '@/action/User'
 
-type License = {
+type User = {
   id: string
-  name: string
-  description?: string
-  application_requirements: string[]
-  renewal_requirements: string[]
-  first_time_application_fee: number
-  renewal_application_fee: number
-  first_time_license_fee: number
-  renewal_license_fee: number
-  validity: number
-  processing_time: number
+  email: string
+  username: string
+  role: string
+  status: string
+  createdAt: Date
 }
 
-type Category = {
-  name: string
-  licenses: License[]
-}
 
-type LicenseRow = License & { category: string }
 
-export default function LicensesDataTable() {
-  const [rows, setRows] = useState<LicenseRow[]>([])
+export default function UsersDataTable() {
+  const [rows, setRows] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchLicenses = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
         setError(null)
         
-        const response = await fetch('http://127.0.0.1:5002/get_services', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        const res =  await fetchUsers({
+          id: true,
+          email: true,
+          username: true,
+          role: true,
+          status: true,
+          createdAt: true       
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        const categories: Category[] = await response.json()
-        const flattened: LicenseRow[] = categories.flatMap((cat) =>
-          cat.licenses.map((lic) => ({
-            ...lic,
-            category: cat.name,
-          }))
-        )
-        setRows(flattened)
+        setRows(res.data)
       } catch (err) {
-        console.error('Failed to fetch licenses:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load licenses')
+        console.error('Failed to fetch users:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load users')
         setRows([])
       } finally {
         setLoading(false)
       }
     }
 
-    fetchLicenses()
+    fetchData()
   }, [])
 
   return (
     <Table className="w-full min-w-[1000px]">
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>License Fee</TableHead>
-          <TableHead>Validity</TableHead>
+          <TableHead>Id</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Username</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>CreatedAt</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -91,7 +74,7 @@ export default function LicensesDataTable() {
             <TableCell colSpan={6} className="text-center py-8">
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                <span className="ml-2">Loading licenses...</span>
+                <span className="ml-2">Loading users...</span>
               </div>
             </TableCell>
           </TableRow>
@@ -99,7 +82,7 @@ export default function LicensesDataTable() {
           <TableRow>
             <TableCell colSpan={6} className="text-center py-8">
               <div className="text-red-600 dark:text-red-400">
-                <p className="font-medium">Error loading licenses</p>
+                <p className="font-medium">Error loading users</p>
                 <p className="text-sm">{error}</p>
               </div>
             </TableCell>
@@ -108,50 +91,56 @@ export default function LicensesDataTable() {
           <TableRow>
             <TableCell colSpan={6} className="text-center py-8">
               <div className="text-gray-500 dark:text-gray-400">
-                <p>No licenses found</p>
+                <p>No user found</p>
               </div>
             </TableCell>
           </TableRow>
         ) : (
-          rows.map((license, index) => (
+          rows.map((user, index) => (
             <TableRow key={index}>
               <TableCell>
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {license.name}
-                </div>
+                {/* <div className="font-medium text-gray-900 dark:text-white">
+                  {user.id}
+                </div> */}
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  ID: {license.id}
+                  {user.id || 'No ID available'}
                 </div>
               </TableCell>
               <TableCell className="max-w-md">
                 <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
-                  {license.description || 'No description available'}
+                  {user.email || 'No email available'}
                 </p>
               </TableCell>
               <TableCell>
                 <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  {license.category}
+                  {user.username || 'No username available'}
                 </div>
+              </TableCell>
+              <TableCell className="max-w-md">
+                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+                  {user.role || 'No role available'}
+                </p>
+              </TableCell>
+              <TableCell className="max-w-md">
+                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+                  {user.status || 'No status available'}
+                </p>
               </TableCell>
               <TableCell>
-                <div className="font-medium">${license.first_time_license_fee}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  App fee: ${license.first_time_application_fee}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="font-medium">{license.validity} Years</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {license.processing_time} days processing
-                </div>
-              </TableCell>
+              <div className='text-sm'>
+                {new Date(user.createdAt).toLocaleDateString()}
+              </div>
+              <div className='text-xs text-gray-500'>
+                {new Date(user.createdAt).toLocaleTimeString()}
+              </div>
+            </TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm">
                     Edit
                   </button>
-                  <button className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300 text-sm">
-                    View
+                  <button className="text-red-600 hover:text-red-800 dark:text-gray-400 dark:hover:text-gray-300 text-sm">
+                    delete
                   </button>
                 </div>
               </TableCell>

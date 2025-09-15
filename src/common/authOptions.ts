@@ -70,6 +70,7 @@ export const authOptions: NextAuthOptions = {
                     return {
                          ...user,
                          id: (user.id || "").toString(),
+                         role: user.role as EUserRole,
                     };
                },
           }),

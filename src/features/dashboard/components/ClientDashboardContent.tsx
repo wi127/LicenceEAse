@@ -1,16 +1,15 @@
 "use client";
 
-import { fetchCompanyById, fetchCompanyByUserId } from "@/action/Company";
+import {  fetchCompanyByUserId } from "@/action/Company";
 import { fetchProfileByUserId, updateProfile } from "@/action/Profile";
 import ClientDashboardLayout from "@/features/client/components/ClientDashboardLayout";
 import ProfileTab, { DEFAULT_COMPANY_INFO, DEFAULT_USER_PROFILE } from "@/features/client/components/ProfileTab";
 import SettingsTab from "@/features/client/components/SettingsTab";
 import { CompanySelect, TCompanySelect } from "@/lib/types/company";
 import { ProfileSelect, TProfileSelect } from "@/lib/types/profile";
-import { TUserSelect, UserSelect } from "@/lib/types/user";
 import { Prisma } from "@prisma/client";
 import { signOut } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 
@@ -18,16 +17,6 @@ export  function ClientDashboardContent({userId, companyId, profileId}: {userId:
   const router = useRouter()
 
   const [tab, setTab] = useState('dashboard')
-  // const [form, setForm] = useState({
-  //   licenseType: '',
-  //   description: '',
-  //   documents: {
-  //     businessPlan: null as File | null,
-  //     rdbCertificate: null as File | null,
-  //     companyContracts: null as File | null,
-  //     otherDocuments: [] as File[]
-  //   },
-  // })
   const [applications, setApplications] = useState<any[]>([])
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -44,26 +33,6 @@ export  function ClientDashboardContent({userId, companyId, profileId}: {userId:
 
   const toggleTheme = () => setDarkMode(!darkMode)
 
-  // Form Submit
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault()
-
-  //   const hasAnyDocument =
-  //     form.documents.businessPlan ||
-  //     form.documents.rdbCertificate ||
-  //     form.documents.companyContracts ||
-  //     form.documents.otherDocuments.length > 0
-
-  //   if (!form.licenseType || !form.description || !hasAnyDocument) {
-  //     return setMessage('License type, description, and at least one document are required.')
-  //   }
-
-  //   setIsSubmitting(true)
-  //   setMessage('')
-
-  // }
-
-  // Profile update
   const handleUpdateProfile = async (updatedProfile: any) => {
     try{
         if(!userProfile) return;

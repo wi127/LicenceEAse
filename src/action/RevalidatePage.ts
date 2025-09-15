@@ -10,7 +10,7 @@ export const RevalidatePages = {
   company: () => {
     revalidatePath('/')
   },
-  license: () => {
+  application: () => {
     revalidatePath('/')
   },
   licenseApplication: () => {

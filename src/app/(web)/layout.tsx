@@ -5,6 +5,7 @@ import TawkLiveChat from '@/features/accounts/components/TawkLiveChat'
 import React, { PropsWithChildren } from 'react'
 import Home from './page'
 import { AuthProvider } from '@/context/AuthContext'
+import { redirect } from 'next/navigation'
 
 export const metadata = {
   title: "LicenseEase",
@@ -13,7 +14,9 @@ export const metadata = {
 
 export default async function WebLayout({ children }: PropsWithChildren) {
    const { user } = await getSessionUser()
-  
+   if (!user) {
+    redirect('/auth/sign-in')
+    }
   return (
     <>
     <AuthProvider authUser={user}>    

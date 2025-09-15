@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { RevalidatePages } from "./RevalidatePage";
 import { cache } from "react";
+import Stripe from "stripe";
 
 export async function createPayment(data: Prisma.PaymentCreateInput) {
   try {
@@ -13,7 +14,7 @@ export async function createPayment(data: Prisma.PaymentCreateInput) {
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Payment: ", error);
-    return { success: false, error: "An unexpected error occurred." };
+    return { success: false, error: "An unexpected error occurred while creating payment." };
   }
 }
 
@@ -59,3 +60,24 @@ export const fetchPaymentById = cache(async <T extends Prisma.PaymentSelect>(id:
           return null;
      }
 });
+
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-07-30.basil",
+});
+
+export async function createPaymentIntentAction(amount: number, currency: string) {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount, 
+      currency,
+      payment_method_types: ['card', 'mobilepay'],
+      automatic_payment_methods: { enabled: true },
+    });
+
+    return { clientSecret: paymentIntent.client_secret };
+  } catch (error: any) {
+    console.error("Stripe error:", error.message);
+    return { error: "Failed to create payment intent" };
+  }
+}

@@ -13,7 +13,7 @@ export async function createApplicationDocument(data: Prisma.ApplicationDocument
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating ApplicationDocument: ", error);
-    return { success: false, error: "An unexpected error occurred." };
+    return { success: false, error: "An unexpected error occurred while creating application document." };
   }
 }
 

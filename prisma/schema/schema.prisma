@@ -90,34 +90,48 @@ model Company {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    LicenseApplication LicenseApplication[]
-    License License[]
+    LicenseApplication ApplicationDocument[]
+    applicationDoc Application[]
+
+    RequiredDocument RequiredDocument[]
 }
 
-model License {
+model Application {
     id        String   @id @default(uuid()) @db.Uuid()
     name      String
+    description    String
     processingTime Int
     applicationFee Float
-    licenseFee    Float
     validityMonths Int
     companyId String   @db.Uuid()
-    company   Company  @relation(fields: [companyId], references: [id])
+    company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    LicenseApplication LicenseApplication[]
+    requiredDocuments RequiredDocument[]
+    LicenseApplication ApplicationDocument[]
+
+    Payment Payment?
+}
+
+enum EDocumentType {
+  BUSINESS_PLAN
+  RDB_CERTIFICATE
+  COMPANY_CONTRACT
+  OTHER_DOCUMENT
 }
 
 model RequiredDocument {
   id          String   @id @default(uuid()) @db.Uuid()
-  name        String   
+  name        String
+  documentType EDocumentType  
   description String?
   file        Bytes
+  companyId   String   @db.Uuid()
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  ApplicationDocument ApplicationDocument[]
+  applications Application[]
 }
 
 enum ApplicationStatus {
@@ -126,33 +140,18 @@ enum ApplicationStatus {
   REJECTED
 }
 
-model LicenseApplication {
+model ApplicationDocument {
   id            String   @id @default(uuid()) @db.Uuid()
   companyId     String   @db.Uuid()
   company       Company  @relation(fields: [companyId], references: [id])
-  licenseTypeId String   @db.Uuid()
-  licenseType   License  @relation(fields: [licenseTypeId], references: [id])
+  applicationId String   @db.Uuid()
+  applicationType   Application  @relation(fields: [applicationId], references: [id])
   status        ApplicationStatus @default(PENDING)
-  submittedAt   DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  documents     ApplicationDocument[]
-  payment       Payment?
 
 }
 
-
-model ApplicationDocument {
-  id               String @id @default(uuid()) @db.Uuid()
-  applicationId    String @db.Uuid()
-  application      LicenseApplication @relation(fields: [applicationId], references: [id])
-  documentId       String @db.Uuid()
-  document         RequiredDocument   @relation(fields: [documentId], references: [id])
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@unique([applicationId, documentId])
-}
 
 enum PaymentStatus {
   PENDING
@@ -165,10 +164,13 @@ model Payment {
   userId          String   @db.Uuid()
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   applicationId   String   @unique @db.Uuid()
-  application     LicenseApplication @relation(fields: [applicationId], references: [id])
+  application     Application @relation(fields: [applicationId], references: [id])
   amount          Float
+  currency        String
   paidAt          DateTime @default(now())
   status          PaymentStatus @default(PENDING)
+  stripeIntentId  String?        @unique
+  paidAtStripe    DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -180,7 +182,7 @@ enum ENotificationStatus {
 }
 
 enum ENotificationType {
-  LICENSE_APPLICATION
+  APPLICATION_STATUS
   PAYMENT_STATUS
   SYSTEM
 }
@@ -206,7 +208,7 @@ enum EAppSettingType {
 model AppSetting {
   id String @id @default(uuid()) @db.Uuid()
   type EAppSettingType
-  value Int
+  value Int //expiry time in minutes
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -13,7 +13,7 @@ export async function createCompany(data: Prisma.CompanyCreateInput) {
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Company: ", error);
-    return { success: false, error: "An unexpected error occurred." };
+    return { success: false, error: "An unexpected error occurred while creating company." };
   }
 }
 
@@ -39,7 +39,7 @@ export async function deleteCompany (id:string) {
      }
 }
 
-export const fetchCompanys = cache(async <T extends Prisma.CompanySelect>(selectType: T, search?: Prisma.CompanyWhereInput, take:number = 20, skip:number = 0, orderBy: Prisma.CompanyOrderByWithRelationInput = { createdAt: 'desc' }):Promise<{data: Prisma.CompanyGetPayload<{select: T}>[], pagination: {total:number}}> => {
+export const fetchCompanies = cache(async <T extends Prisma.CompanySelect>(selectType: T, search?: Prisma.CompanyWhereInput, take:number = 20, skip:number = 0, orderBy: Prisma.CompanyOrderByWithRelationInput = { createdAt: 'desc' }):Promise<{data: Prisma.CompanyGetPayload<{select: T}>[], pagination: {total:number}}> => {
      try {
           const res = await prisma.company.findMany({where: search, take, skip, select: selectType, orderBy});
           const total = await prisma.company.count({where:search});

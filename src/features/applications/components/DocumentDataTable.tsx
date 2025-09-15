@@ -5,84 +5,61 @@ import { Badge } from '@/components/ui/badge'
 import { Building, User, Phone, Mail, MapPin } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { fetchCompanies } from '@/action/Company'
+import { fetchRequiredDocuments } from '@/action/RequiredDocument'
 
-interface Representative {
-  username: string
-  id: string
-  email: string
-  role: string
-}
-
-interface Company {
+interface RequiredDocument {
   id: string
   name: string
-  address: string
-  legalType: string
-  phone: string
-  country: string
-  TIN: string
-  operator: Representative[]
-  emailCompany: string
-  createdAt: Date
+  description?: string | null
+  file: Uint8Array<ArrayBufferLike>
+  documentType: string
 }
 
 export default function CompaniesDataTable() {
-  const [companies, setCompanies] = useState<Company[]>([])
+  const [documents, setDocument] = useState<RequiredDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-  const fetchCompany = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
       setError(null)
-      const resCompany = await fetchCompanies({
+      const resDoc = await fetchRequiredDocuments({
         id: true,
         name: true,
-        address: true,
-        legalType: true,
-        phone: true,
-        country: true,
-        TIN: true,
-        emailCompany: true,
-        operator: { select: { username: true, id: true, email: true, role: true } },
-        createdAt: true,
-
+        description: true,
+        file: true,
+        documentType: true,
       })
-      setCompanies(
-        resCompany.data.map((company: any) => ({
-          ...company,
-          operator: Array.isArray(company.operator) ? company.operator : [company.operator]
-        }))
-      )
+      setDocument(resDoc.data)
     } catch (err) {
-      console.error('Error fetching companies:', err)
+      console.error('Error fetching documents:', err)
       if (error){
-        setError('Failed to load companies')
+        setError('Failed to load documents')
       }
     } finally {
       setLoading(false)
     }
   }
 
-    fetchCompany()
+    fetchData()
   }, [])
 
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="text-gray-500">Loading companies...</div>
+        <div className="text-gray-500">Loading documents...</div>
       </div>
     )
   }
 
 
-  if (companies.length === 0) {
+  if (documents.length === 0) {
     return (
       <div className="text-center py-12">
         <Building className="size-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Companies Registered</h3>
-        <p className="text-gray-600">Companies registered by clients will appear here.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No Documents are saved</h3>
       </div>
     )
   }
@@ -91,15 +68,16 @@ export default function CompaniesDataTable() {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Company Information</TableHead>
-          <TableHead>Contact Details</TableHead>
-          <TableHead>Representatives</TableHead>
-          <TableHead>Registration Info</TableHead>
+          <TableHead>Company</TableHead>
+          <TableHead>File Name</TableHead>
+          <TableHead>Document type</TableHead>
+          <TableHead>File</TableHead>
+          <TableHead>submitted at</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {companies.map((company) =>
+        {documents.map((company) =>
           <TableRow key={company.id}>
             <TableCell>
               <div className='flex items-start gap-3'>

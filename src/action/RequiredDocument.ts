@@ -8,12 +8,13 @@ import { cache } from "react";
 
 export async function createRequiredDocument(data: Prisma.RequiredDocumentCreateInput) {
   try {
-    const res = await prisma.requiredDocument.create({data});
+     const buffer = Buffer.from(data.file);
+    const res = await prisma.requiredDocument.create({data: {...data, file: buffer}});
     if (res) RevalidatePages.requiredDocument();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating RequiredDocument: ", error);
-    return { success: false, error: "An unexpected error occurred." };
+    return { success: false, error: "An unexpected error occurred while creating required document." };
   }
 }
 

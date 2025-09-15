@@ -1,18 +1,15 @@
-// ─────────────────────────────────────────────────────────────────
-// src/features/accounts/components/LoginForm.tsx
-// ─────────────────────────────────────────────────────────────────
-
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import SubmitButton from '@/components/SubmitButton'
 import Link from 'next/link'
 import { signIn } from "next-auth/react"
+import { getSessionUser } from '@/action/User'
 
 export default function LoginForm() {
-  const router = useRouter()
 
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -24,21 +21,26 @@ export default function LoginForm() {
     setLoading(true)
 
     try {
-      const res = await signIn("credentials", {
-        redirect: false,
-        email,
-        password
-      })
+        const res = await signIn("credentials", {
+          redirect: false,
+          email,
+          password
+        })
+  
+        if (res?.error) {
+          setError(res.error || "Login failed.")
+          setLoading(false)
+          return null
+        }
 
-      if (res?.error) {
-        setError(res.error || "Login failed.")
-        setLoading(false)
-        return null
-      }
+        const { user } = await getSessionUser()
 
-      // Redirect based on user role
-      router.push('/client-dashboard')
-    } catch (err: any) {
+        if (user.role === "ADMIN") {
+          router.push("/admin-dashboard")
+        } else {
+          router.push("/client-dashboard")
+        }
+      } catch (err: any) {
       console.error("Login error:", err)
       setError(err.message)
     } finally {

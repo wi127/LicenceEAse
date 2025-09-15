@@ -1,9 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { createApplication } from '@/action/Application'
+import { createRequiredDocument } from '@/action/RequiredDocument'
 
-export default function DashboardSubmitApplication() {
+import { EDocumentType } from '@prisma/client'
+
+export default function DashboardSubmitApplication({ userId, companyId, applicationId }: { userId: string, companyId: string, applicationId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -19,7 +23,6 @@ export default function DashboardSubmitApplication() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState('')
-  const [user, setUser] = useState<any>(null)
 
   const licenseCategories = [
     {
@@ -35,13 +38,12 @@ export default function DashboardSubmitApplication() {
         'Professional liability insurance certificate',
         'Technical team qualifications and certifications'
       ],
-      processingTime: '5-10 business days',
+      processingTime: 5,
       fees: {
-        application: 50,
-        license: 250,
-        renewal: 200
+        application: 80,
+        renewal: 75
       },
-      validity: '2 years'
+      validityMonths: 2
     },
     {
       id: 'network-infrastructure',
@@ -56,13 +58,12 @@ export default function DashboardSubmitApplication() {
         'Equipment supplier certifications',
         'Installation and maintenance team qualifications'
       ],
-      processingTime: '10-25 business days',
+      processingTime: 5,
       fees: {
         application: 75,
-        license: 400,
-        renewal: 300
+        renewal: 70
       },
-      validity: '3 years'
+      validityMonths: 2
     },
     {
       id: 'network-service-provider',
@@ -77,155 +78,145 @@ export default function DashboardSubmitApplication() {
         'Billing and payment processing systems documentation',
         'Network security and monitoring capabilities'
       ],
-      processingTime: '7-21 business days',
+      processingTime: 10,
       fees: {
         application: 100,
-        license: 500,
-        renewal: 400
+        renewal: 80
       },
-      validity: '5 years'
+      validityMonths: 3
     }
   ]
 
-  useEffect(() => {
-    const categoryId = searchParams.get('category')
+   useEffect(() => {
+    const categoryId = searchParams.get("category");
     if (categoryId) {
-      const category = licenseCategories.find(cat => cat.id === categoryId)
-      if (category) {
-        setSelectedCategory(category)
-      }
+      const category = licenseCategories.find((cat) => cat.id === categoryId);
+      if (category) setSelectedCategory(category);
     }
-  }, [searchParams, router])
+  }, [searchParams]);
 
   const handleFileChange = (type: string, files: FileList | null) => {
-    if (!files) return
-
-    if (type === 'otherDocuments') {
-      setForm(prev => ({
+    if (!files) return;
+    if (type === "otherDocuments") {
+      setForm((prev) => ({
         ...prev,
-        documents: {
-          ...prev.documents,
-          otherDocuments: Array.from(files)
-        }
-      }))
+        documents: { ...prev.documents, otherDocuments: Array.from(files) },
+      }));
     } else {
-      setForm(prev => ({
+      setForm((prev) => ({
         ...prev,
-        documents: {
-          ...prev.documents,
-          [type]: files[0]
-        }
-      }))
+        documents: { ...prev.documents, [type]: files[0] },
+      }));
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!selectedCategory || !user) {
-      setMessage('Missing required information. Please try again.')
-      return
+    e.preventDefault();
+    if (!selectedCategory) {
+      setMessage("Please select a license category.");
+      return;
     }
 
-    // Check if at least one document is uploaded
-    const hasAnyDocument = form.documents.businessPlan || 
-                          form.documents.rdbCertificate || 
-                          form.documents.companyContracts || 
-                          form.documents.otherDocuments.length > 0
+    const hasAnyDocument =
+      form.documents.businessPlan ||
+      form.documents.rdbCertificate ||
+      form.documents.companyContracts ||
+      form.documents.otherDocuments.length > 0;
 
     if (!form.description || !hasAnyDocument) {
-      setMessage('Description and at least one document are required.')
-      return
+      setMessage("Description and at least one document are required.");
+      return;
     }
 
-    setIsSubmitting(true)
-    setMessage('')
+    setIsSubmitting(true);
+    setMessage("");
 
     try {
-      const formData = new FormData()
-      formData.append('license_type', selectedCategory.title)
-      formData.append('description', form.description)
-      formData.append('applicant_name', `${user.firstName} ${user.lastName}`)
-      formData.append('applicant_email', user.email)
-      formData.append('applicant_phone', user.phone || '')
-      formData.append('company', user.company || '')
+      const appRes = await createApplication({
+        name: selectedCategory.title,
+        processingTime: selectedCategory.processingTime,
+        description: form.description,
+        applicationFee: selectedCategory.fees.application,
+        validityMonths: selectedCategory.validityMonths,
+        company: { connect: { id: companyId } },
+      });
 
-      // Append all documents with their types
-      if (form.documents.businessPlan) {
-        formData.append('businessPlan', form.documents.businessPlan)
-      }
-      if (form.documents.rdbCertificate) {
-        formData.append('rdbCertificate', form.documents.rdbCertificate)
-      }
-      if (form.documents.companyContracts) {
-        formData.append('companyContracts', form.documents.companyContracts)
-      }
-      form.documents.otherDocuments.forEach((file, index) => {
-        formData.append(`otherDocument_${index}`, file)
-      })
+      if (!appRes.success) throw new Error(appRes.error || "Failed to create application");
 
-      console.log('Submitting application to:', 'http://127.0.0.1:5002/applications')
-      
-      const response = await fetch('http://127.0.0.1:5002/applications', {
-        method: 'POST',
-        body: formData,
-      })
+      const application = appRes.data;
 
-      console.log('Response status:', response.status, response.statusText)
+      const docMappings: Record<string, EDocumentType> = {
+      businessPlan: "BUSINESS_PLAN",
+      rdbCertificate: "RDB_CERTIFICATE",
+      companyContracts: "COMPANY_CONTRACT",
+      otherDocuments: "OTHER_DOCUMENT",
+      };
 
-      if (!response.ok) {
-        let errorMessage = 'Failed to submit application'
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.error || errorMessage
-        } catch (e) {
-          console.error('Failed to parse error response:', e)
-          errorMessage = `Server error (${response.status}): ${response.statusText}`
+      for (const [key, value] of Object.entries(form.documents)) {
+        if (key === "otherDocuments" && Array.isArray(value)) {
+          for (const doc of value) {
+
+          const arrayBuffer = await doc.arrayBuffer();
+          const buffer = new Uint8Array(arrayBuffer);
+          
+          if (buffer.byteLength > 10 * 1024 * 1024) { // 5MB limit
+            throw new Error(`${doc.name} exceeds the 10MB size limit.`);
+          }
+
+            const otherDoc = await createRequiredDocument({
+              name: doc.name,
+              documentType: "OTHER_DOCUMENT",
+              company: { connect: { id: companyId } },
+              file: buffer,
+              applications: { connect: { id: applicationId } },
+            });
+
+            if (!otherDoc.success){
+              throw new Error(otherDoc.error || "Failed to upload document");
+            }
+          }
+        } else if (value instanceof File) {
+          const arrayBuffer = await value.arrayBuffer();
+          const buffer = new Uint8Array(arrayBuffer);
+          
+          if (buffer.byteLength > 10 * 1024 * 1024) { 
+            throw new Error(`${value.name} exceeds the 10MB size limit.`);
+          }
+          const restDoc = await createRequiredDocument({
+            name: value.name,
+            documentType: docMappings[key],
+            company: { connect: { id: companyId } },
+            file: buffer,
+            applications: { connect: { id: applicationId } },
+          });
+
+          if (!restDoc.success){
+            throw new Error(restDoc.error || "Failed to upload document");
+          }
         }
-        throw new Error(errorMessage)
       }
 
-      const data = await response.json()
-      console.log('Success response:', data)
-      
-      // Validate the response has required fields
-      if (!data.application_id) {
-        throw new Error('Invalid response: missing application ID')
-      }
-      
-      setMessage('✅ Application submitted successfully!')
-      
-      // Store payment info for the payment page
-      const paymentInfo = {
-        id: data.application_id,
-        licenseType: selectedCategory.title,
-        fees: selectedCategory.fees
-      }
-      localStorage.setItem('pendingPayment', JSON.stringify(paymentInfo))
-      
-      // Reset form
+      setMessage("✅ Application submitted successfully!");
       setForm({
-        description: '',
-        documents: {
-          businessPlan: null,
-          rdbCertificate: null,
-          companyContracts: null,
-          otherDocuments: []
-        }
-      })
+        description: "",
+        documents: { businessPlan: null, rdbCertificate: null, companyContracts: null, otherDocuments: [] },
+      });
 
-      // Redirect to payment page after showing success message
+      // redirect to payment page
       setTimeout(() => {
-        router.push(`/client-dashboard/payment?applicationId=${paymentInfo.id}&licenseType=${encodeURIComponent(selectedCategory.title)}&fees=${encodeURIComponent(JSON.stringify(selectedCategory.fees))}`)
-      }, 2000)
-
+        router.push(
+          `/client-dashboard/payment?applicationId=${applicationId}&licenseType=${encodeURIComponent(
+            selectedCategory.title
+          )}&fees=${encodeURIComponent(JSON.stringify(selectedCategory.fees?.application))}`
+        );
+      }, 2000);
     } catch (error) {
-      console.error('Error submitting application:', error)
-      setMessage(error instanceof Error ? error.message : 'Failed to submit application. Please try again.')
+      console.error("Error submitting application:", error);
+      setMessage(error instanceof Error ? error.message : "Submission failed");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (!selectedCategory) {
     return (
@@ -264,7 +255,7 @@ export default function DashboardSubmitApplication() {
               <div>
                 <span className="text-blue-600 font-medium">Processing Time:</span>
                 <br />
-                <span className="text-blue-800">{selectedCategory.processingTime}</span>
+                <span className="text-blue-800">{selectedCategory.processingTime} Business days</span>
               </div>
               <div>
                 <span className="text-blue-600 font-medium">Application Fee:</span>
@@ -272,14 +263,9 @@ export default function DashboardSubmitApplication() {
                 <span className="text-blue-800">${selectedCategory.fees.application}</span>
               </div>
               <div>
-                <span className="text-blue-600 font-medium">License Fee:</span>
-                <br />
-                <span className="text-blue-800">${selectedCategory.fees.license}</span>
-              </div>
-              <div>
                 <span className="text-blue-600 font-medium">Validity:</span>
                 <br />
-                <span className="text-blue-800">{selectedCategory.validity}</span>
+                <span className="text-blue-800">{selectedCategory.validityMonths} years</span>
               </div>
             </div>
           </div>

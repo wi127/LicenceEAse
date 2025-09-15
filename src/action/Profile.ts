@@ -13,7 +13,7 @@ export async function createProfile(data: Prisma.ProfileCreateInput) {
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Profile: ", error);
-    return { success: false, error: "An unexpected error occurred." };
+    return { success: false, error: "An unexpected error occurred while creating profile." };
   }
 }
 
