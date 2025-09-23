@@ -143,7 +143,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
 
       if (!appRes.success) throw new Error(appRes.error || "Failed to create application");
 
-      const application = appRes.data;
+      const connectApp = applicationId ? [{ id: applicationId }] : [];
 
       const docMappings: Record<string, EDocumentType> = {
       businessPlan: "BUSINESS_PLAN",
@@ -168,7 +168,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
               documentType: "OTHER_DOCUMENT",
               company: { connect: { id: companyId } },
               file: buffer,
-              applications: { connect: { id: applicationId } },
+              applications: connectApp.length ? { connect: connectApp } : undefined,
             });
 
             if (!otherDoc.success){
@@ -187,7 +187,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
             documentType: docMappings[key],
             company: { connect: { id: companyId } },
             file: buffer,
-            applications: { connect: { id: applicationId } },
+            applications: connectApp.length ? { connect: connectApp } : undefined,
           });
 
           if (!restDoc.success){
