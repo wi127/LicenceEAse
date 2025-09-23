@@ -9,8 +9,8 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { Prisma } from "@prisma/client";
 import { createPayment, createPaymentIntentAction, fetchPaymentById, updatePayment } from '@/action/Payment'
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+// Initialize Stripe for Elements provider
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 type StripeCardFormProps = {
   paymentForm: {
@@ -411,14 +411,6 @@ export default function Payment() {
         }
     
 
-    if ('error' in paymentMethodResponse && paymentMethodResponse.error) {
-      const errorMsg = typeof paymentMethodResponse.error === 'object' && 'message' in paymentMethodResponse.error
-        ? (paymentMethodResponse.error as { message?: string }).message
-        : 'Unknown error';
-      throw new Error(errorMsg || 'Unknown error');
-    }
-
-
     setMessage('✅ Payment request sent to your phone. Please check your mobile money app and confirm the payment.');
     
     // Poll for payment status
@@ -433,18 +425,6 @@ export default function Payment() {
       setIsProcessing(false)
     }
 
-  const handlePayment = async (stripe, cardElement) => {
-    if (!application || !user) {
-      setMessage('Missing payment information. Please try again.')
-      return
-    }
-
-    if (paymentMethod === 'card') {
-      await handleStripePayment(stripe, cardElement)
-    } else {
-      await handleMobileMoneyPayment()
-    }
-  }
 
   if (!application) {
     return (
@@ -462,7 +442,7 @@ export default function Payment() {
   const totalAmountRWF = totalAmountUSD * exchangeRates.RWF // Always show RWF equivalent
 
   return (
-    <Elements stripe={stripe}>
+    <Elements stripe={stripePromise}>
       <PaymentPageContent 
         application={application}
         user={user}
@@ -475,7 +455,7 @@ export default function Payment() {
         paymentForm={paymentForm}
         handleInputChange={handleInputChange}
         isProcessing={isProcessing}
-        handlePayment={handlePayment}
+        handlePayment={handleStripePayment}
         handleMobileMoneyPayment={handleMobileMoneyPayment}
         totalAmountUSD={totalAmountUSD}
         totalAmountSelected={totalAmountSelected}
@@ -494,7 +474,7 @@ function PaymentPageContent({
   paymentMethod, setPaymentMethod, paymentForm, handleInputChange, isProcessing,
   handlePayment, handleMobileMoneyPayment, totalAmountUSD, totalAmountSelected, 
   totalAmountRWF, currencies, formatCurrency, convertAmount, router 
-}) {
+}: any) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -549,7 +529,7 @@ function PaymentPageContent({
                   onChange={(e) => setSelectedCurrency(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {currencies.map(currency => (
+                  {currencies.map((currency: { code: string; symbol: string; name: string }) => (
                     <option key={currency.code} value={currency.code}>
                       {currency.symbol} {currency.name} ({currency.code})
                     </option>
@@ -712,4 +692,5 @@ function PaymentPageContent({
       </div>
     </div>
   )
+}
 }
