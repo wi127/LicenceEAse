@@ -6,6 +6,7 @@ import { loadStripe, } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Prisma } from "@prisma/client";
 import { createPayment, createPaymentIntentAction, fetchPaymentById, updatePayment } from '@/action/Payment'
+import { getSessionUser } from '@/action/User'
 
 // Initialize Stripe for Elements provider
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -208,38 +209,40 @@ export default function Payment() {
     { code: 'RWF', symbol: 'FRw', name: 'Rwandan Franc' }
   ]
 
+  // Fetch user info once when the component mounts
   useEffect(() => {
-    const applicationId = searchParams.get('applicationId')
-    const licenseType = searchParams.get('licenseType')
-    const fees = searchParams.get('fees')
+    async function fetchUser() {
+      const sessionUser = await getSessionUser(); // Replace with your actual user fetching logic
+      if (sessionUser && sessionUser.user) {
+        setUser({ id: sessionUser.user.id, email: sessionUser.user.email });
+      }
+    }
+    fetchUser();
+  }, []); // Runs only once
+
+  // Pre-fill email when user is set
+  useEffect(() => {
+    if (user?.email) {
+      setPaymentForm(prev => ({ ...prev, email: user.email }))
+    }
+  }, [user]); // Runs only when user changes
+
+  // Set application when searchParams change
+  useEffect(() => {
+    const applicationId = searchParams.get('applicationId');
+    const licenseType = searchParams.get('licenseType');
+    const fees = searchParams.get('fees');
 
     if (applicationId && licenseType && fees) {
       setApplication({
         id: applicationId,
         name: licenseType,
         applicationFee: Number(fees),
-      })
+      });
+    } else {
+      setMessage('Missing application details. Please try again.');
     }
-    else {
-      setMessage('Missing application details. Please try again.')
-    }
-    
-    if (!user?.id && !user?.email) {
-    setUser({
-      id: user?.id || '',
-      email: user?.email || '',
-    })
-    }
-    else {
-        setUser(null)
-        router.push('/auth/sign-in')
-    }
-
-    // Pre-fill email if user is logged in
-    if (user?.email) {
-      setPaymentForm(prev => ({ ...prev, email: user.email }))
-    }
-  }, [searchParams, router, user])
+  }, [searchParams]);
 
   // Convert amount from USD to selected currency
   const convertAmount = (amountInUSD: number) => {
@@ -422,7 +425,7 @@ export default function Payment() {
     } finally {
       setIsProcessing(false)
     }
-
+  }
 
   if (!application) {
     return (
@@ -690,5 +693,4 @@ function PaymentPageContent({
       </div>
     </div>
   )
-}
 }
