@@ -3,9 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loadStripe, } from '@stripe/stripe-js'
-import Stripe from 'stripe'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-
 import { Prisma } from "@prisma/client";
 import { createPayment, createPaymentIntentAction, fetchPaymentById, updatePayment } from '@/action/Payment'
 

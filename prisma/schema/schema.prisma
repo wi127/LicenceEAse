@@ -159,6 +159,7 @@ enum PaymentStatus {
   FAILED
 }
 
+
 model Payment {
   id              String   @id @default(uuid()) @db.Uuid()
   userId          String   @db.Uuid()
@@ -178,7 +179,6 @@ model Payment {
 enum ENotificationStatus {
   UNREAD
   READ
-  ARCHIVED
 }
 
 enum ENotificationType {

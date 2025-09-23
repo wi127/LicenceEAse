@@ -110,7 +110,7 @@ export default function ApplicationsDataTable() {
             </TableCell>
             <TableCell>
               <div className='flex items-center justify-center gap-2'>
-                <span>{application.processingTime || 'Not processing time'}</span>
+                <span>{application.processingTime || 'Not processing time'} days</span>
               </div>
             </TableCell>
             <TableCell>
@@ -120,7 +120,7 @@ export default function ApplicationsDataTable() {
             </TableCell>
             <TableCell>
               <div className='flex items-center justify-center gap-2'>
-                <span>{application.validityMonths || 'Not validity months'}</span>
+                <span>{application.validityMonths || 'Not validity months'} years</span>
               </div>
             </TableCell>
             {/* <TableCell>
