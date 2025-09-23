@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import ApplicationsDataTable from '@/features/applications/components/ApplicationsDataTable'
+import DocumentDataTable from '@/features/applications/components/DocumentDataTable'
 import React from 'react'
 
 export default function page() {
@@ -13,7 +13,7 @@ export default function page() {
           <CardHeader>
           </CardHeader>
           <CardContent className='grid'>
-            <ApplicationsDataTable />
+            <DocumentDataTable />
           </CardContent>
         </Card>
       </div>

@@ -26,7 +26,7 @@ export default async function SubmitApplicationContent() {
       }
   return(
     <Suspense fallback={<div>Loading...</div>}>
-      <DashboardSubmitApplication userId={user.id} companyId={companyId} applicationId={application[0]?.id} />
+      <DashboardSubmitApplication companyId={companyId} applicationId={application[0]?.id} />
     </Suspense>
   )
 }

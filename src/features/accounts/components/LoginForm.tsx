@@ -34,8 +34,9 @@ export default function LoginForm() {
         }
 
         const { user } = await getSessionUser()
+        if (!user) return redirect('/auth/sign-in')
 
-        if (user.role === "ADMIN") {
+        if (user.role === "ADMIN" ) {
           router.push("/admin-dashboard")
         } else {
           router.push("/client-dashboard")

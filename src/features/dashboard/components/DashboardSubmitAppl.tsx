@@ -7,7 +7,7 @@ import { createRequiredDocument } from '@/action/RequiredDocument'
 
 import { EDocumentType } from '@prisma/client'
 
-export default function DashboardSubmitApplication({ userId, companyId, applicationId }: { userId: string, companyId: string, applicationId: string }) {
+export default function DashboardSubmitApplication({ companyId, applicationId }: { companyId: string, applicationId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -159,7 +159,7 @@ export default function DashboardSubmitApplication({ userId, companyId, applicat
           const arrayBuffer = await doc.arrayBuffer();
           const buffer = new Uint8Array(arrayBuffer);
           
-          if (buffer.byteLength > 10 * 1024 * 1024) { // 5MB limit
+          if (buffer.byteLength > 10 * 1024 * 1024) { // 10MB limit
             throw new Error(`${doc.name} exceeds the 10MB size limit.`);
           }
 
