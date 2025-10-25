@@ -90,7 +90,6 @@ model Company {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    LicenseApplication ApplicationDocument[]
     applicationDoc Application[]
 
     RequiredDocument RequiredDocument[]
@@ -132,6 +131,8 @@ model RequiredDocument {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   applications Application[]
+
+  ApplicationDocument ApplicationDocument[]
 }
 
 enum ApplicationStatus {
@@ -142,11 +143,15 @@ enum ApplicationStatus {
 
 model ApplicationDocument {
   id            String   @id @default(uuid()) @db.Uuid()
-  companyId     String   @db.Uuid()
-  company       Company  @relation(fields: [companyId], references: [id])
   applicationId String   @db.Uuid()
-  applicationType   Application  @relation(fields: [applicationId], references: [id])
+  applicationType   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  requiredDocumentId String @db.Uuid
+  documentType  RequiredDocument @relation(fields: [requiredDocumentId], references: [id], onDelete: Cascade)
   status        ApplicationStatus @default(PENDING)
+  extractedJson Json?
+  reason        String?
+  confidence    Float?
+  rawOcrText   String? @db.Text()
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

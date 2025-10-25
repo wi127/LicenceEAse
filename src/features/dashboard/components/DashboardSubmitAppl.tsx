@@ -6,6 +6,7 @@ import { createApplication } from '@/action/Application'
 import { createRequiredDocument } from '@/action/RequiredDocument'
 
 import { EDocumentType } from '@prisma/client'
+import { validateDocWithAI } from '@/model/validateDocWithAI'
 
 export default function DashboardSubmitApplication({ companyId, applicationId }: { companyId: string, applicationId: string }) {
   const router = useRouter()
@@ -190,13 +191,18 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
             applications: connectApp.length ? { connect: connectApp } : undefined,
           });
 
-          if (!restDoc.success){
+          if (!restDoc.success && restDoc.data?.id){
+            try {
+                  await validateDocWithAI(restDoc.data.id);
+                } catch (err) {
+                    console.error("AI validation failed:", err);
+                }
             throw new Error(restDoc.error || "Failed to upload document");
           }
         }
       }
 
-      setMessage("✅ Application submitted successfully!");
+      setMessage("Application submitted successfully!");
       setForm({
         description: "",
         documents: { businessPlan: null, rdbCertificate: null, companyContracts: null, otherDocuments: [] },

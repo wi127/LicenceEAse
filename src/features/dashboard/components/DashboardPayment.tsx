@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { loadStripe, } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Prisma } from "@prisma/client";
-import { createPayment, createPaymentIntentAction, fetchPaymentById, updatePayment } from '@/action/Payment'
+import { createPayment, createPaymentIntentAction, updatePayment } from '@/action/Payment'
 import { getSessionUser } from '@/action/User'
 
 // Initialize Stripe for Elements provider
