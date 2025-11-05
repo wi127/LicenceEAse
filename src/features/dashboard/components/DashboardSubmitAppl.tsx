@@ -7,6 +7,7 @@ import { createRequiredDocument } from '@/action/RequiredDocument'
 
 import { EDocumentType } from '@prisma/client'
 import { validateDocWithAI } from '@/model/validateDocWithAI'
+import { createApplicationDocument } from '@/action/ApplicationDocument'
 
 export default function DashboardSubmitApplication({ companyId, applicationId }: { companyId: string, applicationId: string }) {
   const router = useRouter()
@@ -191,16 +192,33 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
             applications: connectApp.length ? { connect: connectApp } : undefined,
           });
 
-          if (!restDoc.success && restDoc.data?.id){
+          if (restDoc.success && restDoc.data?.id){
+            const requiredDocId = restDoc.data.id;
+            const applRes = appRes.data?.id
+            try{
+              const res = await createApplicationDocument({
+                  applicationType: { connect: { id: applRes } },
+                  documentType: {connect: {id: requiredDocId}},
+                  status : "PENDING"
+
+              })
+            }catch(err){
+               console.error("Failed to create applicationDocument", err);
+            }
             try {
-                  await validateDocWithAI(restDoc.data.id);
+                  await fetch("/api/validateDoc", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ docId: requiredDocId }),
+                  });
                 } catch (err) {
-                    console.error("AI validation failed:", err);
+                  console.error("AI validation failed:", err);
                 }
-            throw new Error(restDoc.error || "Failed to upload document");
+            } else {
+              throw new Error(restDoc.error || "Failed to upload document");
+            }
           }
         }
-      }
 
       setMessage("Application submitted successfully!");
       setForm({

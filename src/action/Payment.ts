@@ -3,14 +3,14 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidatePayment } from "./RevalidatePage";
 import { cache } from "react";
 import Stripe from "stripe";
 
 export async function createPayment(data: Prisma.PaymentCreateInput) {
   try {
     const res = await prisma.payment.create({data});
-    if (res) RevalidatePages.payment();
+    if (res) await revalidatePayment();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Payment: ", error);
@@ -21,7 +21,7 @@ export async function createPayment(data: Prisma.PaymentCreateInput) {
 export async function updatePayment (id:string, data:Prisma.PaymentUpdateInput) {
      try {
           const res = await prisma.payment.update({where: {id}, data});
-          if(res) RevalidatePages.payment();
+          if(res) await revalidatePayment();
           return res; 
      } catch (error) {
           console.log(`Error updating Payment with id: ${id}`, error);
@@ -32,7 +32,7 @@ export async function updatePayment (id:string, data:Prisma.PaymentUpdateInput) 
 export async function deletePayment (id:string) {
      try {
           const res = await prisma.payment.delete({where: {id}});
-          if(res) RevalidatePages.payment();
+          if(res) await revalidatePayment();
           return res;
      } catch (error) {
           console.log("Error deleting Payment with id: ", id, error);

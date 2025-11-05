@@ -1,5 +1,5 @@
 
-const OPENAI_API_KEY = process.env.OPEN_API_KEY 
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY 
 const OPENAI_MODEL = process.env.OPENAI_MODEL
 
 async function callOpenAI(prompt: Array<{role: string, content: string}>){
@@ -10,7 +10,7 @@ async function callOpenAI(prompt: Array<{role: string, content: string}>){
             'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-            model: OPENAI_MODEL || 'gpt-3.5-turbo',
+            model: OPENAI_MODEL || 'gpt-4o-mini',
             messages: prompt,
             max_tokens: 1200,
             temperature: 0,
@@ -27,7 +27,7 @@ async function callOpenAI(prompt: Array<{role: string, content: string}>){
 }
 
 export async function validateTemplateWithLLM(ocrText: string, docType: string) {
-    const { TEMPLATE_DOCTYPE } = await import('./template.js');
+    const { TEMPLATE_DOCTYPE } = await import('./template');
 
     const template = TEMPLATE_DOCTYPE[docType] ?? TEMPLATE_DOCTYPE['OTHER_DOCUMENT'];
 

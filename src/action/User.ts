@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidateUser } from "./RevalidatePage";
 import { cache } from "react";
 import { encryptPassword, verifyPassword } from "../util/bcryptFuncs";
 import { ESessionFetchMode } from "@/common/enums";
@@ -22,7 +22,7 @@ export async function createUser(data: Prisma.UserCreateInput) {
         password: hashedPassword,
       },
     });
-    if (res) RevalidatePages.user();
+    if (res) await revalidateUser();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating user: ", error);
@@ -33,7 +33,7 @@ export async function createUser(data: Prisma.UserCreateInput) {
 export async function updateUser (id:string, data:Prisma.UserUpdateInput) {
      try {
           const res = await prisma.user.update({where: {id}, data});
-          if(res) RevalidatePages.user();
+          if(res) await revalidateUser();
           return res; 
      } catch (error) {
           console.log(`Error updating user with id: ${id}`, error);
@@ -44,7 +44,7 @@ export async function updateUser (id:string, data:Prisma.UserUpdateInput) {
 export async function deleteUser (id:string) {
      try {
           const res = await prisma.user.delete({where: {id}});
-          if(res) RevalidatePages.user();
+          if(res) await revalidateUser();
           return res;
      } catch (error) {
           console.log("Error deleting user with id: ", id, error);

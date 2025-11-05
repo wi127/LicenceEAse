@@ -3,14 +3,13 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidateApplication } from "./RevalidatePage";
 import { cache } from "react";
-import { fetchCompanyByUserId } from "./Company";
 
 export async function createApplication(data: Prisma.ApplicationCreateInput) {
   try {
     const res = await prisma.application.create({data});
-    if (res) RevalidatePages.application();
+    if (res) await revalidateApplication();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Application: ", error);
@@ -21,7 +20,7 @@ export async function createApplication(data: Prisma.ApplicationCreateInput) {
 export async function updateApplication (id:string, data:Prisma.ApplicationUpdateInput) {
      try {
           const res = await prisma.application.update({where: {id}, data});
-          if(res) RevalidatePages.application();
+          if(res) await revalidateApplication();
           return res; 
      } catch (error) {
           console.log(`Error updating Application with id: ${id}`, error);
@@ -32,7 +31,7 @@ export async function updateApplication (id:string, data:Prisma.ApplicationUpdat
 export async function deleteApplication (id:string) {
      try {
           const res = await prisma.application.delete({where: {id}});
-          if(res) RevalidatePages.application();
+          if(res) await revalidateApplication();
           return res;
      } catch (error) {
           console.log("Error deleting Application with id: ", id, error);
@@ -64,7 +63,6 @@ export const fetchApplicationById = cache(async <T extends Prisma.ApplicationSel
 export const getApplicationByCompanyId = cache(async <T extends Prisma.ApplicationSelect>(id:string, selectType: T): Promise<Prisma.ApplicationGetPayload<{ select: T }>[]> => {
      try {
           const res = await prisma.application.findMany({where: {companyId: id}, select: selectType});
-          if(res) RevalidatePages.application();
           return res; 
      } catch (error) {
           console.log(`Error fetching Application with id: ${id}`, error);

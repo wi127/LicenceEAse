@@ -3,13 +3,13 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidateCompany } from "./RevalidatePage";
 import { cache } from "react";
 
 export async function createCompany(data: Prisma.CompanyCreateInput) {
   try {
     const res = await prisma.company.create({data});
-    if (res) RevalidatePages.company();
+    if (res) await revalidateCompany();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Company: ", error);
@@ -20,7 +20,7 @@ export async function createCompany(data: Prisma.CompanyCreateInput) {
 export async function updateCompany (id:string, data:Prisma.CompanyUpdateInput) {
      try {
           const res = await prisma.company.update({where: {id}, data});
-          if(res) RevalidatePages.company();
+          if(res) await revalidateCompany();
           return res; 
      } catch (error) {
           console.log(`Error updating Company with id: ${id}`, error);
@@ -31,7 +31,7 @@ export async function updateCompany (id:string, data:Prisma.CompanyUpdateInput) 
 export async function deleteCompany (id:string) {
      try {
           const res = await prisma.company.delete({where: {id}});
-          if(res) RevalidatePages.company();
+          if(res) await revalidateCompany();
           return res;
      } catch (error) {
           console.log("Error deleting Company with id: ", id, error);

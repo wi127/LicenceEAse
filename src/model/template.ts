@@ -20,6 +20,7 @@ Required sections (order required):
 3. OFFICIAL SEAL or SIGNATURE
 Rules:
 - "TIN number" must be present and match DB entry.
+- "Business Name" must be present and match DB entry.
 `,
   COMPANY_CONTRACT: `
 Template: COMPANY_CONTRACT v1
