@@ -3,13 +3,13 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidateProfile } from "./RevalidatePage";
 import { cache } from "react";
 
 export async function createProfile(data: Prisma.ProfileCreateInput) {
   try {
     const res = await prisma.profile.create({data});
-    if (res) RevalidatePages.profile();
+    if (res) await revalidateProfile();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Profile: ", error);
@@ -20,7 +20,7 @@ export async function createProfile(data: Prisma.ProfileCreateInput) {
 export async function updateProfile (id:string, data:Prisma.ProfileUpdateInput) {
      try {
           const res = await prisma.profile.update({where: {id}, data});
-          if(res) RevalidatePages.profile();
+          if(res) await revalidateProfile();
           return res; 
      } catch (error) {
           console.log(`Error updating Profile with id: ${id}`, error);
@@ -31,7 +31,7 @@ export async function updateProfile (id:string, data:Prisma.ProfileUpdateInput) 
 export async function deleteProfile (id:string) {
      try {
           const res = await prisma.profile.delete({where: {id}});
-          if(res) RevalidatePages.profile();
+          if(res) await revalidateProfile();
           return res;
      } catch (error) {
           console.log("Error deleting Profile with id: ", id, error);

@@ -1,8 +1,9 @@
+"use server";
+
 import prisma from "@/lib/prisma";
 import { runOCROnPDFBuffer } from "./runOCR";
 import { validateTemplateWithLLM } from "./validateTemplateLLM";
 import { fetchRequiredDocumentById } from "@/action/RequiredDocument";
-import { createApplicationDocument } from "@/action/ApplicationDocument";
 
 
 export async function validateDocWithAI(docId: string, options = { updateApplicationDocument: true }) {

@@ -3,13 +3,13 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidateNotification } from "./RevalidatePage";
 import { cache } from "react";
 
 export async function createNotification(data: Prisma.NotificationCreateInput) {
   try {
     const res = await prisma.notification.create({data});
-    if (res) RevalidatePages.notification();
+    if (res) await revalidateNotification();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating Notification: ", error);
@@ -20,7 +20,7 @@ export async function createNotification(data: Prisma.NotificationCreateInput) {
 export async function updateNotification (id:string, data:Prisma.NotificationUpdateInput) {
      try {
           const res = await prisma.notification.update({where: {id}, data});
-          if(res) RevalidatePages.notification();
+          if(res) await revalidateNotification();
           return res; 
      } catch (error) {
           console.log(`Error updating Notification with id: ${id}`, error);
@@ -31,7 +31,7 @@ export async function updateNotification (id:string, data:Prisma.NotificationUpd
 export async function deleteNotification (id:string) {
      try {
           const res = await prisma.notification.delete({where: {id}});
-          if(res) RevalidatePages.notification();
+          if(res) await revalidateNotification();
           return res;
      } catch (error) {
           console.log("Error deleting Notification with id: ", id, error);

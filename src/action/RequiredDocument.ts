@@ -3,14 +3,14 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidateRequiredDocument } from "./RevalidatePage";
 import { cache } from "react";
 
 export async function createRequiredDocument(data: Prisma.RequiredDocumentCreateInput) {
   try {
      const buffer = Buffer.from(data.file);
     const res = await prisma.requiredDocument.create({data: {...data, file: buffer}});
-    if (res) RevalidatePages.requiredDocument();
+    if (res) await revalidateRequiredDocument();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating RequiredDocument: ", error);
@@ -21,7 +21,7 @@ export async function createRequiredDocument(data: Prisma.RequiredDocumentCreate
 export async function updateRequiredDocument (id:string, data:Prisma.RequiredDocumentUpdateInput) {
      try {
           const res = await prisma.requiredDocument.update({where: {id}, data});
-          if(res) RevalidatePages.requiredDocument();
+          if(res) await revalidateRequiredDocument();
           return res; 
      } catch (error) {
           console.log(`Error updating RequiredDocument with id: ${id}`, error);
@@ -32,7 +32,7 @@ export async function updateRequiredDocument (id:string, data:Prisma.RequiredDoc
 export async function deleteRequiredDocument (id:string) {
      try {
           const res = await prisma.requiredDocument.delete({where: {id}});
-          if(res) RevalidatePages.requiredDocument();
+          if(res) await revalidateRequiredDocument();
           return res;
      } catch (error) {
           console.log("Error deleting RequiredDocument with id: ", id, error);

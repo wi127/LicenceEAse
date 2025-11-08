@@ -3,13 +3,13 @@
 import prisma from "@/lib/prisma";
 
 import { Prisma } from "@prisma/client";
-import { RevalidatePages } from "./RevalidatePage";
+import { revalidateApplicationDocument  } from "./RevalidatePage";
 import { cache } from "react";
 
 export async function createApplicationDocument(data: Prisma.ApplicationDocumentCreateInput) {
   try {
     const res = await prisma.applicationDocument.create({data});
-    if (res) RevalidatePages.applicationDocument();
+    if (res) await revalidateApplicationDocument();
     return { success: true, data: res };
   } catch (error) {
     console.log("error creating ApplicationDocument: ", error);
@@ -20,7 +20,7 @@ export async function createApplicationDocument(data: Prisma.ApplicationDocument
 export async function updateApplicationDocument (id:string, data:Prisma.ApplicationDocumentUpdateInput) {
      try {
           const res = await prisma.applicationDocument.update({where: {id}, data});
-          if(res) RevalidatePages.applicationDocument();
+          if(res) await revalidateApplicationDocument();
           return res; 
      } catch (error) {
           console.log(`Error updating ApplicationDocument with id: ${id}`, error);
@@ -31,7 +31,7 @@ export async function updateApplicationDocument (id:string, data:Prisma.Applicat
 export async function deleteApplicationDocument (id:string) {
      try {
           const res = await prisma.applicationDocument.delete({where: {id}});
-          if(res) RevalidatePages.applicationDocument();
+          if(res) await revalidateApplicationDocument();
           return res;
      } catch (error) {
           console.log("Error deleting ApplicationDocument with id: ", id, error);
