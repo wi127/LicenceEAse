@@ -2,7 +2,7 @@ export const TEMPLATE_DOCTYPE: Record<string, string> = {
   BUSINESS_PLAN: `
 Template: BUSINESS_PLAN v1
 Required sections (order required):
-1. HEADER: "Business Name", "Business ID", "Issue Date"
+1. HEADER: "Business Name", "Business ID or TIN Number", "Issue Date"
 2. EXECUTIVE SUMMARY
 3. FINANCIALS
 4. SIGNATURE / DECLARATION
@@ -35,6 +35,6 @@ Rules:
   OTHER_DOCUMENT: `
 Template: GENERIC_DOCUMENT v1
 Rules:
-- We apply lighter checks: must contain "Business Name" and "Business ID".
+- We apply lighter checks: must contain "Business Name" and "Business ID or TIN Number".
 `,
 };
