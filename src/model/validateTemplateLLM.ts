@@ -1,10 +1,6 @@
 
-<<<<<<< HEAD
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
-=======
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY 
->>>>>>> d689fa0803573f57ec1174c90b951b6a0a6e67af
-const OPENAI_MODEL = process.env.OPENAI_MODEL
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL;
 
 async function callOpenAI(prompt: Array<{role: string, content: string}>){
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
