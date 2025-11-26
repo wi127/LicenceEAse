@@ -15,12 +15,15 @@ Rules:
   RDB_CERTIFICATE: `
 Template: RDB_CERTIFICATE v1
 Required sections (order required):
-1. HEADER: "RDB CERTIFICATE", "Business Name", "Business ID or TIN number"
-2. ISSUED_ON (YYYY-MM-DD)
-3. OFFICIAL SEAL or SIGNATURE
+1. HEADER: "RDB", "Company Name", "Company Code", "ORG", "Date of Issuance", "Emblem of Rwanda"
+2. Registered Office Address: "Email", "Phone Number", "Address"
+3. Management details: "Name", "ID Document"
+4. OFFICIAL SEAL or SIGNATURE
 Rules:
-- "TIN number" must be present and match DB entry.
-- "Business Name" must be present and match DB entry.
+- "Company Code" company is like TIN in my DB and it must be present and match DB entry.
+- "Company Name" must be present and match DB entry.
+- "Date of Issuance" format: DD-MM- YYYY.
+- "ID Document" number of NID Card must be 16 characters and present in DB entry as nationalID.
 `,
   COMPANY_CONTRACT: `
 Template: COMPANY_CONTRACT v1
