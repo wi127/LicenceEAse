@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
+import WebNavbar from '@/components/WebNavbar'
 
 export default function Home() {
 
@@ -54,6 +55,8 @@ export default function Home() {
   }
 
   return (
+    <>
+    <WebNavbar />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
@@ -211,5 +214,6 @@ export default function Home() {
         </div>
       </div>
     </div>
+    </>
   )
 }
