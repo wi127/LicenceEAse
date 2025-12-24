@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-const fontBase = Poppins({ subsets: ["latin"] , weight: ['100','200','300','400','500','600','700','800','900'] });
+const fontBase = Poppins({ subsets: ["latin"], weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] });
 
 export const metadata: Metadata = {
   title: "LicenseEase",
@@ -13,10 +13,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
- 
+
   return (
     <html lang="en">
-      <body className={fontBase.className+ ' bg-gray-100'}>{children}</body>
+      <body className={fontBase.className + ' bg-gray-100'} suppressHydrationWarning>{children}</body>
     </html>
   );
 }

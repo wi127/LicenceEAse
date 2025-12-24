@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { loadStripe, } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Prisma } from "@prisma/client";
-import { createPayment, createPaymentIntentAction, updatePayment } from '@/action/Payment'
+import { createPayment, createPaymentIntentAction, updatePayment, upsertPayment } from '@/action/Payment'
 import { getSessionUser } from '@/action/User'
 
 // Initialize Stripe for Elements provider
@@ -38,7 +38,7 @@ function StripeCardForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    
+
     if (!stripe || !elements) {
       return
     }
@@ -179,8 +179,8 @@ export type TPayApplicationSelect = Prisma.ApplicationGetPayload<{ select: typeo
 export default function Payment() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [application, setApplication] = useState<TPayApplicationSelect|null>(null)
-  const [user, setUser] = useState<TPayUserSelect|null>(null)
+  const [application, setApplication] = useState<TPayApplicationSelect | null>(null)
+  const [user, setUser] = useState<TPayUserSelect | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [message, setMessage] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState('USD')
@@ -252,7 +252,7 @@ export default function Payment() {
   // Format currency display
   const formatCurrency = (amount: number, currencyCode: string) => {
     const currency = currencies.find(c => c.code === currencyCode)
-    return `${currency?.symbol}${amount.toLocaleString('en-US', { 
+    return `${currency?.symbol}${amount.toLocaleString('en-US', {
       minimumFractionDigits: currencyCode === 'RWF' ? 0 : 2,
       maximumFractionDigits: currencyCode === 'RWF' ? 0 : 2
     })}`
@@ -264,8 +264,8 @@ export default function Payment() {
 
   const validateForm = () => {
     if (paymentMethod === 'card') {
-      return paymentForm.email && paymentForm.cardNumber && paymentForm.expiryMonth && 
-             paymentForm.expiryYear && paymentForm.cvc && paymentForm.cardholderName && paymentForm.country
+      // CardElement handles the secure fields, we only validate our form fields
+      return paymentForm.email && paymentForm.cardholderName && paymentForm.country
     } else {
       return paymentForm.email && paymentForm.phoneNumber
     }
@@ -284,43 +284,33 @@ export default function Payment() {
     setMessage('')
 
     try {
-      const totalAmountUSD = application?.applicationFee
-      const totalAmountSelected = convertAmount(Number(totalAmountUSD))
-      
-      if (!totalAmountUSD || totalAmountUSD <= 0) {
-        throw new Error("Invalid payment amount")
+      if (!application?.id) {
+        throw new Error("Invalid application")
+      }
+
+      if (!user?.id) {
+        throw new Error("User session not found. Please log in.")
       }
 
       if (!validateForm()) {
         throw new Error("Please fill in all required fields")
       }
 
-      const { clientSecret, error: intentError } = await createPaymentIntentAction(totalAmountSelected, selectedCurrency)
+      const { clientSecret, amount: serverAmount, error: intentError } = await createPaymentIntentAction(application.id, selectedCurrency)
 
-      if (!clientSecret) {
+      if (!clientSecret || !serverAmount) {
         throw new Error(intentError || "Failed to create payment intent")
       }
 
-       const payment =await createPayment({
-         user: { connect: { id: user?.id } },
-         application: { connect: { id: application?.id } },
-         amount: totalAmountSelected ?? 0,
-         status: "PENDING",
-         stripeIntentId: clientSecret,
-         currency: selectedCurrency,
-       });
+      const payment = await upsertPayment({
+        userId: user.id,
+        applicationId: application.id,
+        amount: serverAmount,
+        stripeIntentId: clientSecret,
+        currency: selectedCurrency,
+      });
 
-       if (!payment.data) throw new Error(payment.error || "Failed to create payment");
-
-       const amount = payment.data?.amount;
-
-       if (amount === undefined || amount <= 0) {
-       throw new Error("Payment amount cannot be empty or negative");
-       }
-
-       if (amount !== application?.applicationFee) {
-         throw new Error("Payment amount mismatch");
-        }  
+      if (!payment.data) throw new Error(payment.error || "Failed to create payment");
 
       // 2. Confirm payment with Stripe Elements
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
@@ -354,74 +344,88 @@ export default function Payment() {
         }
         setMessage('✅ Payment processed successfully! Redirecting to dashboard...')
 
-        
+
         setTimeout(() => {
           router.push('/client-dashboard?tab=applications&status=paid')
         }, 2000)
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment error:', error)
-      setMessage(`Payment failed: ${error} || 'Please try again.'}`)
+      setMessage(`Payment failed: ${error.message || error}`)
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const handleMobileMoneyPayment = async () => {
+  const handleMobileMoneyPayment = async (
+    stripe: import('@stripe/stripe-js').Stripe | null,
+    elements: import('@stripe/stripe-js').StripeElements | null
+  ) => {
+    if (!stripe || !elements) {
+      setMessage('Payment system unavailable.')
+      return
+    }
+
     setIsProcessing(true)
     setMessage('')
 
     try {
-      const totalAmountUSD = application?.applicationFee
-      const totalAmountSelected = convertAmount(Number(totalAmountUSD))
+      if (!application?.id) {
+        throw new Error("Invalid application")
+      }
 
-      if (!totalAmountUSD || totalAmountUSD <= 0) {
-        throw new Error("Invalid payment amount")
+      if (!user?.id) {
+        throw new Error("User session not found. Please log in.")
       }
 
       if (!validateForm()) {
         throw new Error("Please fill in all required fields")
       }
-      
-      const { clientSecret, error: interError } = await createPaymentIntentAction(totalAmountSelected, selectedCurrency)
 
-      if (!clientSecret) {
-        throw new Error(interError || "Failed to create payment intent")
+      const { clientSecret, amount: serverAmount, error: intentError } = await createPaymentIntentAction(application.id, selectedCurrency)
+
+      if (!clientSecret || !serverAmount) {
+        throw new Error(intentError || "Failed to create payment intent")
       }
 
-      const payment =await createPayment({
-         user: { connect: { id: user?.id } },
-         application: { connect: { id: application?.id } },
-         amount: totalAmountSelected ?? 0,
-         status: "PENDING",
-         stripeIntentId: clientSecret,
-         currency: selectedCurrency,
-       });
+      const payment = await upsertPayment({
+        userId: user.id,
+        applicationId: application.id,
+        amount: serverAmount,
+        stripeIntentId: clientSecret,
+        currency: selectedCurrency,
+      });
 
-       if (!payment.data) throw new Error(payment.error || "Failed to create payment");
+      if (!payment.data) throw new Error(payment.error || "Failed to create payment");
+      // Confirm Payment for Mobile Money
+      // We use confirmMobilePayPayment because confirmPayment requires a mounted PaymentElement when passing 'elements'.
+      const { error: stripeError } = await stripe.confirmMobilepayPayment(clientSecret, {
+        payment_method: {
+          billing_details: {
+            email: paymentForm.email,
+            phone: paymentForm.phoneNumber,
+            address: {
+              country: 'RW', // Defaulting to RW for mobile money usually, or use paymentForm.country
+            }
+          }
+        },
+        return_url: window.location.origin + '/client-dashboard?tab=applications',
+      });
 
-       const amount = payment.data?.amount;
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
 
-       if (amount === undefined || amount <= 0) {
-       throw new Error("Payment amount cannot be empty or negative");
-       }
+      setMessage('Payment initiated. Please check your phone or follow instructions.');
 
-       if (amount !== application?.applicationFee) {
-         throw new Error("Payment amount mismatch");
-        }
-    
+      setTimeout(() => {
+        router.push('/client-dashboard?tab=applications&status=pending-payment');
+      }, 3000);
 
-    setMessage('✅ Payment request sent to your phone. Please check your mobile money app and confirm the payment.');
-    
-    // Poll for payment status
-    setTimeout(() => {
-      router.push('/client-dashboard?tab=applications&status=pending-payment');
-    }, 3000);
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Mobile payment error:', error)
-      setMessage(`❌ Payment failed: ${error} || 'Please try again.'}`)
+      setMessage(`Payment failed: ${error.message || error}`)
     } finally {
       setIsProcessing(false)
     }
@@ -440,11 +444,11 @@ export default function Payment() {
 
   const totalAmountUSD = application.applicationFee
   const totalAmountSelected = convertAmount(totalAmountUSD)
-  const totalAmountRWF = totalAmountUSD * exchangeRates.RWF // Always show RWF equivalent
+  const totalAmountRWF = totalAmountUSD * exchangeRates.RWF
 
   return (
     <Elements stripe={stripePromise}>
-      <PaymentPageContent 
+      <PaymentPageContent
         application={application}
         user={user}
         message={message}
@@ -470,17 +474,20 @@ export default function Payment() {
   )
 }
 
-function PaymentPageContent({ 
+function PaymentPageContent({
   application, user, message, setMessage, selectedCurrency, setSelectedCurrency,
   paymentMethod, setPaymentMethod, paymentForm, handleInputChange, isProcessing,
-  handlePayment, handleMobileMoneyPayment, totalAmountUSD, totalAmountSelected, 
-  totalAmountRWF, currencies, formatCurrency, convertAmount, router 
+  handlePayment, handleMobileMoneyPayment, totalAmountUSD, totalAmountSelected,
+  totalAmountRWF, currencies, formatCurrency, convertAmount, router
 }: any) {
+  const stripe = useStripe();
+  const elements = useElements();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <button 
+          <button
             onClick={() => router.push('/client-dashboard')}
             className="flex items-center text-gray-600 hover:text-gray-800 mb-4"
           >
@@ -494,11 +501,10 @@ function PaymentPageContent({
         </div>
 
         {message && (
-          <div className={`mb-6 p-4 rounded-md ${
-            message.includes('✅') 
-              ? 'bg-green-100 text-green-700 border border-green-200' 
-              : 'bg-red-100 text-red-700 border border-red-200'
-          }`}>
+          <div className={`mb-6 p-4 rounded-md ${message.includes('✅')
+            ? 'bg-green-100 text-green-700 border border-green-200'
+            : 'bg-red-100 text-red-700 border border-red-200'
+            }`}>
             {message}
           </div>
         )}
@@ -589,11 +595,10 @@ function PaymentPageContent({
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setPaymentMethod('card')}
-                  className={`p-4 border rounded-lg flex flex-col items-center ${
-                    paymentMethod === 'card' 
-                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`p-4 border rounded-lg flex flex-col items-center ${paymentMethod === 'card'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
                 >
                   <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -602,11 +607,10 @@ function PaymentPageContent({
                 </button>
                 <button
                   onClick={() => setPaymentMethod('mobile')}
-                  className={`p-4 border rounded-lg flex flex-col items-center ${
-                    paymentMethod === 'mobile' 
-                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`p-4 border rounded-lg flex flex-col items-center ${paymentMethod === 'mobile'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
                 >
                   <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -670,7 +674,7 @@ function PaymentPageContent({
                 {/* Pay Button */}
                 <button
                   type="button"
-                  onClick={handleMobileMoneyPayment}
+                  onClick={() => handleMobileMoneyPayment(stripe, elements)}
                   disabled={isProcessing || !paymentForm.email || !paymentForm.phoneNumber}
                   className="w-full bg-green-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                 >
