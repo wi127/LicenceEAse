@@ -195,9 +195,9 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                       </p>
                     </div>
                     <div className={`px-3 py-1 rounded-full text-sm font-medium ${app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        app.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          app.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
+                      app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
                       }`}>
                       {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                     </div>
