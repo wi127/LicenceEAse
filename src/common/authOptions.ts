@@ -11,17 +11,17 @@ declare module "next-auth" {
      interface Session extends DefaultSession {
           user: {
                id: string;
-               type: EUserRole;
+               type: string;
           } & DefaultSession["user"];
      }
 
      interface User extends DefaultUser {
           id: string;
-          type?: EUserRole;
+          type?: string;
      }
 }
 
-const UserSelect = {id:true, email:true, username: true, password:true, role:true, status:true} satisfies Prisma.UserSelect;
+const UserSelect = { id: true, email: true, username: true, password: true, role: true, status: true } satisfies Prisma.UserSelect;
 
 export const authOptions: NextAuthOptions = {
      adapter: PrismaAdapter(prisma),
@@ -31,7 +31,7 @@ export const authOptions: NextAuthOptions = {
                clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
                authorization: {
                     params: {
-                      scope: "open id email profile",
+                         scope: "open id email profile",
                     },
                },
                profile(profile) {
@@ -46,8 +46,8 @@ export const authOptions: NextAuthOptions = {
           CredentialsProvider({
                name: "Credentials",
                credentials: {
-               email: { label: "Email", type: "email" },
-               password: { label: "Password", type: "password" },
+                    email: { label: "Email", type: "email" },
+                    password: { label: "Password", type: "password" },
                },
                async authorize(credentials) {
 
@@ -59,12 +59,12 @@ export const authOptions: NextAuthOptions = {
                          password: string;
                     };
 
-                    
+
                     const user = await prisma.user.findUnique({ where: { email }, select: UserSelect });
                     if (!user || !user.password) return null;
-                    if(user.status === EUserStatus.INACTIVE) return null;
+                    if (user.status === EUserStatus.INACTIVE) return null;
 
-                    const isPasswordValid = await verifyPassword(password,user.password);
+                    const isPasswordValid = await verifyPassword(password, user.password);
                     if (!isPasswordValid) return null;
 
                     return {
@@ -98,7 +98,7 @@ export const authOptions: NextAuthOptions = {
                if (account?.provider === "google" && profile && profile.email) {
                     const gProfile = profile as { email: string; name?: string; picture?: string };
                     let user = await prisma.user.findUnique({ where: { email: profile.email }, select: UserSelect });
-          
+
                     if (!user) {
                          // Create the new user in the database
                          user = await prisma.user.create({
@@ -109,13 +109,13 @@ export const authOptions: NextAuthOptions = {
                                    createdAt: new Date(),
                                    isOAuth: true,
                                    updatedAt: new Date(),
-                                   role: EUserRole.USER,
+                                   role: 'USER',
                                    status: EUserStatus.ACTIVE
-                                   
+
                               },
                          });
                     }
-          
+
                     // Upsert account details
                     await prisma.account.upsert({
                          where: {
@@ -138,12 +138,12 @@ export const authOptions: NextAuthOptions = {
                               accessTokenExpires: account.expires_at ? new Date(account.expires_at * 1000) : null,
                          },
                     });
-          
+
                     return true;
                }
                return true;
           },
-          async jwt({token, user}) {
+          async jwt({ token, user }) {
                if (user) {
                     const myUser = user;
                     token.id = myUser.id;
@@ -168,13 +168,13 @@ export const authOptions: NextAuthOptions = {
                          type: token.type,
                          image: token.picture || null
                     };
-               }else {
+               } else {
                     console.error("Token is undefined in session callback.");
                }
                return session;
           },
      },
-     secret: process.env.NEXTAUTH_SECRET , // new Date().getMonth()  Changes monthly
+     secret: process.env.NEXTAUTH_SECRET, // new Date().getMonth()  Changes monthly
      pages: {
           signIn: "/auth/sign-in",
      },

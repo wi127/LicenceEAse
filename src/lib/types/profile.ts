@@ -6,7 +6,7 @@ export const ProfileSelect = {
   phone: true,
   address: true,
   nationalId: true,
-  user: { select: { id: true, username: true, email: true } },
+  user: { select: { id: true, username: true, email: true, image: true } },
   createdAt: true,
 } satisfies Prisma.ProfileSelect;
 

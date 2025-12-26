@@ -6,24 +6,48 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from '@/components/ui/button'
 import { Camera, User } from 'lucide-react'
 import React, { useState } from 'react'
+import { updateAccount } from '@/action/Account'
+import { toast } from 'sonner'
+import { TProfileSelect } from '@/lib/types/profile'
+import { TCompanySelect } from '@/lib/types/company'
 
-export default function AccountEditForm() {
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+interface AccountEditFormProps {
+  user: {
+    id: string;
+    email: string;
+    image: string | null;
+    role: string | unknown;
+  }
+  profile: TProfileSelect | null
+  company: TCompanySelect | null
+}
+
+export default function AccountEditForm({ user, profile, company }: AccountEditFormProps) {
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.image || null)
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: profile?.fullname || '',
+    email: user?.email || '',
+    phone: profile?.phone || '',
+    role: (user?.role as string) || '',
+    company: company?.name || '',
+    password: '',
+    confirmPassword: ''
+  })
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type and size
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file')
+        toast.error('Please select an image file')
         return
       }
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        alert('Image size must be under 2MB')
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Image size must be under 2MB')
         return
       }
-      
+
       const reader = new FileReader()
       reader.onload = (e) => {
         setProfilePhoto(e.target?.result as string)
@@ -32,11 +56,35 @@ export default function AccountEditForm() {
     }
   }
 
-  const handleSave = () => {
-    // Here you would save the profile data
-    console.log('Saving profile changes...')
-    setIsEditing(false)
-    alert('Profile updated successfully!')
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSave = async () => {
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match")
+      return
+    }
+
+    try {
+      const res = await updateAccount(user.id, {
+        fullname: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        companyName: formData.company,
+        image: profilePhoto || undefined,
+        password: formData.password || undefined
+      })
+
+      if (res.success) {
+        toast.success("Profile updated successfully")
+        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }))
+      } else {
+        toast.error(res.error || "Failed to update profile")
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    }
   }
 
   return (
@@ -56,10 +104,10 @@ export default function AccountEditForm() {
             </Avatar>
             <div className="flex flex-col gap-2">
               <label htmlFor="photo-upload">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   className="cursor-pointer"
                   asChild
                 >
@@ -76,59 +124,70 @@ export default function AccountEditForm() {
                 className="hidden"
                 onChange={handlePhotoUpload}
               />
-              <p className="text-xs text-gray-500">Max 2MB, JPG/PNG only</p>
+              <p className="text-xs text-text-muted-foreground">Max 2MB, JPG/PNG only</p>
             </div>
           </div>
 
-          <form className="grid gap-6 text-sm">
+          <form className="grid gap-6 text-sm" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="grid gap-1">
                 <label htmlFor="name" className="primary">Full Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   id="name"
                   name="name"
-                  className="primary" 
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="primary p-2 border rounded"
                   placeholder="Enter your full name"
                 />
               </div>
               <div className="grid gap-1">
                 <label htmlFor="email" className="primary">Email address</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   id="email"
                   name="email"
-                  className="primary" 
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="primary p-2 border rounded"
                   placeholder="Enter your email"
                 />
               </div>
               <div className="grid gap-1">
                 <label htmlFor="phone" className="primary">Phone Number</label>
-                <input 
-                  type="tel" 
+                <input
+                  type="tel"
                   id="phone"
                   name="phone"
-                  className="primary" 
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="primary p-2 border rounded"
                   placeholder="Enter your phone number"
                 />
               </div>
               <div className="grid gap-1">
                 <label htmlFor="role" className="primary">Role/Title</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   id="role"
                   name="role"
-                  className="primary" 
+                  value={formData.role}
+                  readOnly
+                  disabled
+                  className="primary p-2 border rounded bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
                   placeholder="e.g. CEO, Manager, Director"
                 />
               </div>
               <div className="grid gap-1 md:col-span-2">
                 <label htmlFor="company" className="primary">Company Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   id="company"
                   name="company"
-                  className="primary" 
+                  value={formData.company}
+                  onChange={handleChange}
+                  className="primary p-2 border rounded"
                   placeholder="Enter your company name"
                 />
               </div>
@@ -140,21 +199,25 @@ export default function AccountEditForm() {
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="grid gap-1">
                   <label htmlFor="password" className="primary">New Password</label>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     id="password"
                     name="password"
-                    className="primary" 
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="primary p-2 border rounded"
                     placeholder="Enter new password"
                   />
                 </div>
                 <div className="grid gap-1">
                   <label htmlFor="password2" className="primary">Confirm Password</label>
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     id="password2"
                     name="password2"
-                    className="primary" 
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="primary p-2 border rounded"
                     placeholder="Confirm new password"
                   />
                 </div>
@@ -163,7 +226,18 @@ export default function AccountEditForm() {
 
             <div className="flex gap-2">
               <SubmitButton onClick={handleSave}>Save Changes</SubmitButton>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => {
+                setFormData({
+                  name: profile?.fullname || '',
+                  email: user?.email || '',
+                  phone: profile?.phone || '',
+                  role: (user?.role as string) || '',
+                  company: company?.name || '',
+                  password: '',
+                  confirmPassword: ''
+                });
+                setProfilePhoto(user?.image || null);
+              }}>Cancel</Button>
             </div>
           </form>
         </div>
