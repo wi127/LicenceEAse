@@ -16,7 +16,7 @@ export default async function page() {
       <DashboardStatsWidget />
       <div className='grid lg:grid-cols-2 gap-6'>
         <ApplicationsChart />
-        <RenewalsChart />
+        {/* <RenewalsChart /> */}
       </div>
       <NewApplications />
     </main>

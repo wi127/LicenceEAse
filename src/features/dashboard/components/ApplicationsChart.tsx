@@ -1,12 +1,12 @@
 "use client"
 
-import { TrendingUp } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts"
+import { useEffect, useState } from "react"
+import { getApplicationsChartData } from "@/action/chartDashboard"
 
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -17,31 +17,51 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-]
 
 const chartConfig = {
   desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
+    label: "Applications",
   },
 } satisfies ChartConfig
 
 export function ApplicationsChart() {
+  const [data, setData] = useState<{ month: string; desktop: number }[]>([])
+  const [status, setStatus] = useState<'approved' | 'rejected' | 'pending'>('approved')
+  const [year, setYear] = useState<number>(new Date().getFullYear())
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getApplicationsChartData(year, status)
+      if (res.success && res.data) {
+        setData(res.data)
+      }
+    }
+    fetchData()
+  }, [status, year])
+
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Applications</CardTitle>
-          <div className="text-xs">
-            <select name="status" id="" className="bg-background border border-input rounded-md px-3 py-1 text-sm text-foreground">
+          <div className="flex gap-2">
+            <select
+              className="bg-background border border-input rounded-md px-3 py-1 text-sm text-foreground"
+              value={year}
+              onChange={(e) => setYear(parseInt(e.target.value))}
+            >
+              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select
+              name="status"
+              className="bg-background border border-input rounded-md px-3 py-1 text-sm text-foreground capitalize"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as 'approved' | 'rejected' | 'pending')}
+            >
               <option value="approved">Approved</option>
+              <option value="pending">Pending</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -51,7 +71,7 @@ export function ApplicationsChart() {
         <ChartContainer config={chartConfig}>
           <BarChart
             accessibilityLayer
-            data={chartData}
+            data={data}
             margin={{
               top: 20,
             }}
@@ -68,7 +88,11 @@ export function ApplicationsChart() {
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8}>
+            <Bar
+              dataKey="desktop"
+              fill={status === 'approved' ? '#22c55e' : status === 'rejected' ? '#ef4444' : '#eab308'} // green-500, red-500, yellow-500
+              radius={8}
+            >
               <LabelList
                 position="top"
                 offset={12}
@@ -80,15 +104,8 @@ export function ApplicationsChart() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="text-xs grid grid-cols-2 gap-4 max-w-md">
-          <div className="grid gap-1">
-            <label htmlFor="from" className="text-sm font-medium text-foreground">From</label>
-            <input type="date" className="bg-background border border-input rounded-md px-3 py-1 text-sm text-foreground" name="from" />
-          </div>
-          <div className="grid gap-1">
-            <label htmlFor="to" className="text-sm font-medium text-foreground">To</label>
-            <input type="date" className="bg-background border border-input rounded-md px-3 py-1 text-sm text-foreground" name="to" />
-          </div>
+        <div className="leading-none text-muted-foreground">
+          Showing applications for {year}
         </div>
       </CardFooter>
     </Card>
