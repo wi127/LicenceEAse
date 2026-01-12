@@ -119,16 +119,20 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
             <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6'>
-              <h3 className='text-lg font-semibold mb-2'>Total Applications</h3>
-              <p className='text-3xl font-bold text-primary'>{applications.length}</p>
-            </div>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6'>
               <h3 className='text-lg font-semibold mb-2'>Rejected</h3>
               <p className='text-3xl font-bold text-red-600'>{applications.filter((app: any) => app.status === 'rejected').length}</p>
             </div>
             <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6'>
+              <h3 className='text-lg font-semibold mb-2'>Pending</h3>
+              <p className='text-3xl font-bold text-yellow-600'>{applications.filter((app: any) => app.status === 'pending').length}</p>
+            </div>
+            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6'>
               <h3 className='text-lg font-semibold mb-2'>Approved</h3>
               <p className='text-3xl font-bold text-green-600'>{applications.filter((app: any) => app.status === 'approved').length}</p>
+            </div>
+            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6'>
+              <h3 className='text-lg font-semibold mb-2'>Total Applications</h3>
+              <p className='text-3xl font-bold text-primary'>{applications.length}</p>
             </div>
           </div>
 

@@ -12,7 +12,7 @@ import { createApplicationDocument } from '@/action/ApplicationDocument'
 export default function DashboardSubmitApplication({ companyId, applicationId }: { companyId: string, applicationId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   const [selectedCategory, setSelectedCategory] = useState<any>(null)
   const [form, setForm] = useState({
     description: '',
@@ -25,6 +25,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState('')
+  const [validationErrors, setValidationErrors] = useState<Array<{ docName: string; reason: string }>>([]);
+  const [showValidationFailure, setShowValidationFailure] = useState(false);
 
   const licenseCategories = [
     {
@@ -89,7 +91,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
     }
   ]
 
-   useEffect(() => {
+  useEffect(() => {
     const categoryId = searchParams.get("category");
     if (categoryId) {
       const category = licenseCategories.find((cat) => cat.id === categoryId);
@@ -132,6 +134,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
 
     setIsSubmitting(true);
     setMessage("");
+    setValidationErrors([]);
+    setShowValidationFailure(false);
 
     try {
       const appRes = await createApplication({
@@ -146,24 +150,25 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       if (!appRes.success) throw new Error(appRes.error || "Failed to create application");
 
       const connectApp = applicationId ? [{ id: applicationId }] : [];
+      let localErrors: Array<{ docName: string; reason: string }> = [];
 
       const docMappings: Record<string, EDocumentType> = {
-      businessPlan: "BUSINESS_PLAN",
-      rdbCertificate: "RDB_CERTIFICATE",
-      companyContracts: "COMPANY_CONTRACT",
-      otherDocuments: "OTHER_DOCUMENT",
+        businessPlan: "BUSINESS_PLAN",
+        rdbCertificate: "RDB_CERTIFICATE",
+        companyContracts: "COMPANY_CONTRACT",
+        otherDocuments: "OTHER_DOCUMENT",
       };
 
       for (const [key, value] of Object.entries(form.documents)) {
         if (key === "otherDocuments" && Array.isArray(value)) {
           for (const doc of value) {
 
-          const arrayBuffer = await doc.arrayBuffer();
-          const buffer = new Uint8Array(arrayBuffer);
-          
-          if (buffer.byteLength > 10 * 1024 * 1024) { // 10MB limit
-            throw new Error(`${doc.name} exceeds the 10MB size limit.`);
-          }
+            const arrayBuffer = await doc.arrayBuffer();
+            const buffer = new Uint8Array(arrayBuffer);
+
+            if (buffer.byteLength > 10 * 1024 * 1024) { // 10MB limit
+              throw new Error(`${doc.name} exceeds the 10MB size limit.`);
+            }
 
             const otherDoc = await createRequiredDocument({
               name: doc.name,
@@ -173,15 +178,15 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
               applications: connectApp.length ? { connect: connectApp } : undefined,
             });
 
-            if (!otherDoc.success){
+            if (!otherDoc.success) {
               throw new Error(otherDoc.error || "Failed to upload document");
             }
           }
         } else if (value instanceof File) {
           const arrayBuffer = await value.arrayBuffer();
           const buffer = new Uint8Array(arrayBuffer);
-          
-          if (buffer.byteLength > 10 * 1024 * 1024) { 
+
+          if (buffer.byteLength > 10 * 1024 * 1024) {
             throw new Error(`${value.name} exceeds the 10MB size limit.`);
           }
           const restDoc = await createRequiredDocument({
@@ -192,33 +197,61 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
             applications: connectApp.length ? { connect: connectApp } : undefined,
           });
 
-          if (restDoc.success && restDoc.data?.id){
+          if (restDoc.success && restDoc.data?.id) {
             const requiredDocId = restDoc.data.id;
             const applRes = appRes.data?.id
-            try{
+            try {
               const res = await createApplicationDocument({
-                  applicationType: { connect: { id: applRes } },
-                  documentType: {connect: {id: requiredDocId}},
-                  status : "PENDING"
+                applicationType: { connect: { id: applRes } },
+                documentType: { connect: { id: requiredDocId } },
+                status: "PENDING"
 
               })
-            }catch(err){
-               console.error("Failed to create applicationDocument", err);
+            } catch (err) {
+              console.error("Failed to create applicationDocument", err);
             }
             try {
-                  await fetch("/api/validateDoc", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ docId: requiredDocId }),
+              const validateRes = await fetch("/api/validateDoc", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ docId: requiredDocId }),
+              });
+
+              if (!validateRes.ok) {
+                const errorData = await validateRes.json();
+                localErrors.push({
+                  docName: restDoc.data?.name || "Document",
+                  reason: errorData.error || "Validation service failed"
+                });
+              } else {
+                const validateData = await validateRes.json();
+                if (validateData.finalStatus === 'REJECTED') {
+                  localErrors.push({
+                    docName: restDoc.data?.name || "Document",
+                    reason: validateData.validationResult?.reasons?.join(", ") || "Document was rejected by AI validation"
                   });
-                } catch (err) {
-                  console.error("AI validation failed:", err);
                 }
-            } else {
-              throw new Error(restDoc.error || "Failed to upload document");
+              }
+
+            } catch (err: any) {
+              console.error("AI validation failed:", err);
+              localErrors.push({
+                docName: restDoc.data?.name || "Document",
+                reason: err.message || "Validation failed unexpectedly"
+              });
             }
+          } else {
+            throw new Error(restDoc.error || "Failed to upload document");
           }
         }
+      }
+
+      if (localErrors.length > 0) {
+        setValidationErrors(localErrors);
+        setShowValidationFailure(true);
+        // Do not redirect, let the user see the error UI
+        return;
+      }
 
       setMessage("Application submitted successfully!");
       setForm({
@@ -253,11 +286,61 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
     )
   }
 
+  if (showValidationFailure) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-8 text-center border-t-4 border-red-500">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+            <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Document Validation Failed</h2>
+          <p className="text-gray-600 mb-6">
+            Some of your uploaded documents could not be verified by our automated system.
+            Please review the errors below.
+          </p>
+
+          <div className="bg-red-50 rounded-lg p-4 mb-8 text-left">
+            <h3 className="font-semibold text-red-800 mb-2">Failed Documents:</h3>
+            <ul className="space-y-3">
+              {validationErrors.map((err, idx) => (
+                <li key={idx} className="flex flex-col sm:flex-row sm:items-start text-sm border-b border-red-100 last:border-0 pb-2 last:pb-0">
+                  <span className="font-medium text-red-900 sm:w-1/3 break-words pr-2">{err.docName}:</span>
+                  <span className="text-red-700 sm:w-2/3">{err.reason}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => {
+                setShowValidationFailure(false);
+                setValidationErrors([]);
+                setIsSubmitting(false);
+              }}
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => router.push('/client-dashboard')}
+              className="px-6 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <button 
+          <button
             onClick={() => router.back()}
             className="flex items-center text-gray-600 hover:text-gray-800 mb-4"
           >
@@ -295,11 +378,10 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
           </div>
 
           {message && (
-            <div className={`mb-6 p-4 rounded-md ${
-              message.includes('✅') 
-                ? 'bg-green-100 text-green-700 border border-green-200' 
-                : 'bg-red-100 text-red-700 border border-red-200'
-            }`}>
+            <div className={`mb-6 p-4 rounded-md ${message.includes('✅')
+              ? 'bg-green-100 text-green-700 border border-green-200'
+              : 'bg-red-100 text-red-700 border border-red-200'
+              }`}>
               {message}
             </div>
           )}
@@ -454,4 +536,3 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
     </div>
   )
 }
-
