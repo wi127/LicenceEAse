@@ -1,8 +1,8 @@
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY 
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL
 
-async function callOpenAI(prompt: Array<{role: string, content: string}>){
+async function callOpenAI(prompt: Array<{ role: string, content: string }>) {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -46,7 +46,7 @@ export async function validateTemplateWithLLM(ocrText: string, docType: string) 
     }
     `;
 
-      const user = `
+    const user = `
     TEMPLATE:
     ${template}
 
@@ -54,7 +54,7 @@ export async function validateTemplateWithLLM(ocrText: string, docType: string) 
     ${ocrText.slice(0, 30000)}
     `;
 
-    const res = await callOpenAI([{role: 'system', content: system}, {role: 'user', content: user}]);
+    const res = await callOpenAI([{ role: 'system', content: system }, { role: 'user', content: user }]);
     const content = res.choices[0].message.content
 
     try {
@@ -69,7 +69,7 @@ export async function validateTemplateWithLLM(ocrText: string, docType: string) 
             } catch (err2) {
                 throw new Error(`Failed to parse JSON from LLM response: ${err2}\nResponse was: ${content}`);
             }
-    }
-       throw new Error("OpenAI did not return valid JSON: " + content.slice(0, 500));
+        }
+        throw new Error("OpenAI did not return valid JSON: " + content.slice(0, 500));
     }
 }

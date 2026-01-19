@@ -5,7 +5,6 @@ Required sections (order required):
 1. HEADER: "Business Name", "Business ID or TIN Number", "Issue Date"
 2. EXECUTIVE SUMMARY
 3. FINANCIALS
-4. SIGNATURE / DECLARATION
 
 Rules:
 - Section titles must match exactly (case-insensitive but exact words).
@@ -31,9 +30,6 @@ Required sections (order required):
 1. CONTRACT TITLE
 2. PARTIES: "Company A", "Company B"
 3. TERMS
-4. SIGNATURE BLOCK
-Rules:
-- Must include signature block.
 `,
   OTHER_DOCUMENT: `
 Template: GENERIC_DOCUMENT v1
