@@ -8,8 +8,8 @@ export default function page() {
   return (
     <main className='grid gap-6 px-4'>
       <div className='flex justify-between items-center'>
-        <h2 className='text-2xl capitalize font-bold'>Licenses</h2>
-        <Link href={'/admin-dashboard/users/create'} className={buttonVariants()}>New License</Link>
+        <h2 className='text-2xl capitalize font-bold'>Users</h2>
+        <Link href={'/admin-dashboard/users/create'} className={buttonVariants()}>New User</Link>
       </div>
       <div>
         <Card>
