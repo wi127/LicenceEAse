@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable */
 import prisma from "@/lib/prisma";
 import { DefaultSession, DefaultUser, NextAuthOptions, Session as NextAuthSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";

@@ -14,14 +14,14 @@ const validTabs = ['account', 'profile'] as const
 type ValidTab = typeof validTabs[number]
 
 interface Props {
-  searchParams: {
-    tab: string
-  }
+  searchParams: Promise<{
+    tab?: string
+  }>
 }
 
 export default async function page({ searchParams }: Props) {
-
-  const current = validTabs.includes(searchParams.tab as any) ? searchParams.tab as ValidTab : "account" as ValidTab
+  const { tab } = await searchParams
+  const current = validTabs.includes(tab as any) ? tab as ValidTab : "account" as ValidTab
 
   const { user } = await getSessionUser()
 

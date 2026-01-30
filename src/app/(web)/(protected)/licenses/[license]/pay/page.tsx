@@ -3,30 +3,28 @@
 import SubmitButton from '@/components/SubmitButton'
 import { licenseCategories } from '@/features/licenses/schema/licenseSchema'
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 
-interface Props {
-  params: {
-    license: string,
-  }
-  searchParams: {
-    type: string
-  }
-}
+interface Props { }
 
 const validTypes = ['first-time-application-fee', 'first-time-license-fee']
 
-export default function PayPage({ params, searchParams }: Props) {
+export default function PayPage() {
   const router = useRouter()
+  const params = useParams()
+  const searchParams = useSearchParams()
   const [isProcessing, setIsProcessing] = useState(false)
-  
-  if (!validTypes.includes(searchParams.type)) return (
+
+  const licenseParam = params?.license as string
+  const typeParam = searchParams.get('type') as string
+
+  if (!validTypes.includes(typeParam)) return (
     <div className='container py-12 text-center'>
       <h1 className='text-2xl text-destructive font-semibold'>Error parsing payment type</h1>
     </div>
   )
-  const paymentType = searchParams.type.replaceAll('-',' ')
-  const license = licenseCategories.flatMap(category => category.licenses).find(license => license.id.toString() === params.license)
+  const paymentType = typeParam.replaceAll('-', ' ')
+  const license = licenseCategories.flatMap(category => category.licenses).find(license => license.id.toString() === licenseParam)
   if (!license) return "Not found"
 
   const handlePaymentComplete = async () => {
@@ -34,7 +32,7 @@ export default function PayPage({ params, searchParams }: Props) {
     try {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       // Update application status in backend
       const token = localStorage.getItem('authToken')
       await fetch('http://127.0.0.1:5002/applications/payment-complete', {
@@ -44,11 +42,11 @@ export default function PayPage({ params, searchParams }: Props) {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          licenseId: params.license,
-          paymentType: searchParams.type
+          licenseId: licenseParam,
+          paymentType: typeParam
         })
       })
-      
+
       // Redirect to dashboard with success message
       router.push('/client-dashboard?tab=dashboard&payment=success')
     } catch (error) {
@@ -74,11 +72,11 @@ export default function PayPage({ params, searchParams }: Props) {
             console.log('Processing mobile money payment for:', phoneNumber)
             handlePaymentComplete()
           }} className='flex items-center gap-4 text-sm'>
-            <input 
-              type="tel" 
+            <input
+              type="tel"
               name="phone"
-              placeholder='Phone Number' 
-              className='primary w-full max-w-md' 
+              placeholder='Phone Number'
+              className='primary w-full max-w-md'
               required
               pattern="[0-9]{10,13}"
               disabled={isProcessing}
@@ -90,7 +88,7 @@ export default function PayPage({ params, searchParams }: Props) {
         </div>
         <div className='flex items-center gap-2 py-6 font-medium text-sm'><span className='flex-grow border-t-2'></span>Or<span className='flex-grow border-t-2'></span></div>
         <div className='grid'>
-          <SubmitButton 
+          <SubmitButton
             variant={'accent'}
             disabled={isProcessing}
             onClick={() => {

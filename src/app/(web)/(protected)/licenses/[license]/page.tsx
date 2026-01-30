@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import TitleCount from '@/features/licenses/components/TitleCount'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
 type License = {
   id: string
@@ -22,13 +23,12 @@ type Category = {
   licenses: License[]
 }
 
-interface Props {
-  params: {
-    license: string
-  }
-}
+interface Props { }
 
-export default function LicensePage({ params }: Props) {
+export default function LicensePage() {
+  const params = useParams()
+  const licenseParam = params?.license as string
+
   const [license, setLicense] = useState<License | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -44,7 +44,7 @@ export default function LicensePage({ params }: Props) {
       const categories: Category[] = JSON.parse(saved)
       const allLicenses = categories.flatMap((cat) => cat.licenses)
       const found = allLicenses.find(
-        (lic) => lic.id.toString() === params.license
+        (lic) => lic.id.toString() === licenseParam
       )
       setLicense(found ?? null)
     } catch (e) {
@@ -53,7 +53,7 @@ export default function LicensePage({ params }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [params.license])
+  }, [licenseParam])
 
   if (loading) {
     return <p className="text-center py-4">Loading…</p>

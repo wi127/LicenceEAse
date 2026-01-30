@@ -667,7 +667,7 @@ function PaymentPageContent({
                     />
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    We'll send a payment request to your mobile money account
+                    We&apos;ll send a payment request to your mobile money account
                   </p>
                 </div>
 

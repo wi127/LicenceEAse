@@ -8,12 +8,9 @@ import RemoveFileDialog from '@/features/files/components/RemoveFileDialog'
 import UploadFileDialog from '@/features/files/components/UploadFileDialog'
 import { Download } from 'lucide-react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
-interface Props {
-  params: {
-    license: string
-  }
-}
+interface Props { }
 
 type License = {
   id: string
@@ -34,7 +31,10 @@ type UploadedFile = {
   url?: string
 }
 
-export default function ApplyPage({ params }: Props) {
+export default function ApplyPage() {
+  const params = useParams()
+  const licenseParam = params?.license as string
+
   const [license, setLicense] = useState<License | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, UploadedFile>>({})
@@ -52,7 +52,7 @@ export default function ApplyPage({ params }: Props) {
       const categories: Category[] = JSON.parse(saved)
       const allLicenses = categories.flatMap((cat) => cat.licenses)
       const found = allLicenses.find(
-        (lic) => lic.id.toString() === params.license
+        (lic) => lic.id.toString() === licenseParam
       )
       setLicense(found ?? null)
     } catch (e) {
@@ -61,7 +61,7 @@ export default function ApplyPage({ params }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [params.license])
+  }, [licenseParam])
 
   const handleFileUpload = (documentName: string, file: File) => {
     setUploadedFiles(prev => ({
@@ -83,16 +83,16 @@ export default function ApplyPage({ params }: Props) {
 
   const handleSubmitApplication = async () => {
     if (!license) return
-    
+
     setIsSubmitting(true)
     try {
       // For now, just log the submission - you can integrate with your backend later
       console.log('Submitting application for:', license.name)
       console.log('Uploaded files:', uploadedFiles)
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       alert('Application submitted successfully!')
     } catch (error) {
       console.error('Failed to submit application:', error)
@@ -130,7 +130,7 @@ export default function ApplyPage({ params }: Props) {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Document Upload</CardTitle>
-              <SubmitButton 
+              <SubmitButton
                 disabled={!allRequiredFilesUploaded || isSubmitting}
                 onClick={handleSubmitApplication}
               >
@@ -148,9 +148,8 @@ export default function ApplyPage({ params }: Props) {
                 return (
                   <div
                     key={index}
-                    className={`flex justify-between items-center gap-6 p-3 rounded-lg border ${
-                      isUploaded ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                    }`}
+                    className={`flex justify-between items-center gap-6 p-3 rounded-lg border ${isUploaded ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                      }`}
                   >
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">{req}</p>
@@ -162,17 +161,17 @@ export default function ApplyPage({ params }: Props) {
                     </div>
                     <div className="flex items-center gap-2">
                       {!isUploaded ? (
-                        <UploadFileDialog 
+                        <UploadFileDialog
                           documentName={req}
                           onUpload={(file) => handleFileUpload(req, file)}
                         />
                       ) : (
                         <>
-                          <RemoveFileDialog 
+                          <RemoveFileDialog
                             fileName={isUploaded.name}
                             onRemove={() => handleFileRemove(req)}
                           />
-                          <Button 
+                          <Button
                             className="h-8 w-8 p-0 rounded-full"
                             variant="outline"
                             onClick={() => {
