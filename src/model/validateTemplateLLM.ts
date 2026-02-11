@@ -1,6 +1,7 @@
+"use server";
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY 
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL;
 
 async function callOpenAI(prompt: Array<{ role: string, content: string }>) {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -21,28 +22,30 @@ async function callOpenAI(prompt: Array<{ role: string, content: string }>) {
         const text = await res.text();
         throw new Error(`OpenRouteR API error ${res.status}: ${text}`);
     }
-    const data = await res.json();
-    //return data.choices[0].message.content;
-    return data;
+    return await res.json();
 }
 
 export async function validateTemplateWithLLM(ocrText: string, docType: string) {
     const { TEMPLATE_DOCTYPE } = await import('./template');
-
     const template = TEMPLATE_DOCTYPE[docType] ?? TEMPLATE_DOCTYPE['OTHER_DOCUMENT'];
 
     const system = `
     You are a strict document validator. You will compare OCR_TEXT against a TEMPLATE.
-    Return JSON ONLY, nothing else. Use the schema exactly.
+    Return JSON ONLY.
+
+    SPECIAL RULES FOR RDB_CERTIFICATE:
+    1. HEADER elements ("RWANDA", "DEVELOPMENT BOARD", "ORG", "Office of the Registrar General") may appear in any order or on separate lines.
+    2. The "Official Seal" is valid if "Serial No" and "rdb.rw" are present.
+    3. Accept Date format as DD/MM/YYYY.
 
     SCHEMA:
     {
         "status": "APPROVED" | "REJECTED" | "PENDING_REVIEW",
         "templateMatch": boolean,
         "missingSections": [string],
-        "extracted": { "businessName"?: {value:string, confidence:number}, "businessId"?: {value:string, confidence:number}, "issueDate"?: {value:string, confidence:number}, ... },
+        "extracted": { "businessName"?: string, "businessId"?: string, "issueDate"?: string },
         "reasons": [string],
-        "confidence": number  // 0..1 aggregate
+        "confidence": number
     }
     `;
 
@@ -50,25 +53,19 @@ export async function validateTemplateWithLLM(ocrText: string, docType: string) 
     TEMPLATE:
     ${template}
 
-    OCR_TEXT (first 30000 chars):
+    OCR_TEXT:
     ${ocrText.slice(0, 30000)}
     `;
 
     const res = await callOpenAI([{ role: 'system', content: system }, { role: 'user', content: user }]);
-    const content = res.choices[0].message.content
+    const content = res.choices[0].message.content;
 
     try {
-        const parsed = JSON.parse(content);
-        return parsed;
+        return JSON.parse(content);
     } catch (err) {
         const match = content.match(/\{[\s\S]*\}/);
         if (match) {
-            try {
-                const parsed = JSON.parse(match[0]);
-                return parsed;
-            } catch (err2) {
-                throw new Error(`Failed to parse JSON from LLM response: ${err2}\nResponse was: ${content}`);
-            }
+            return JSON.parse(match[0]);
         }
         throw new Error("OpenAI did not return valid JSON: " + content.slice(0, 500));
     }
