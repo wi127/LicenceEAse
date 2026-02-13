@@ -25,7 +25,7 @@ async function callOpenAI(prompt: Array<{ role: string, content: string }>) {
     return await res.json();
 }
 
-export async function validateTemplateWithLLM(ocrText: string, docType: string) {
+export async function validateTemplateWithLLM(ocrText: string, docType: string, category: string) {
     const { TEMPLATE_DOCTYPE } = await import('./template');
     const template = TEMPLATE_DOCTYPE[docType] ?? TEMPLATE_DOCTYPE['OTHER_DOCUMENT'];
 

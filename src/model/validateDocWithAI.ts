@@ -4,56 +4,86 @@ import prisma from "@/lib/prisma";
 import { runOCROnPDFBuffer } from "./runOCR";
 import { validateTemplateWithLLM } from "./validateTemplateLLM";
 import { fetchRequiredDocumentById } from "@/action/RequiredDocument";
+import { RURA_REGULATIONS } from "./template";
 
 export async function validateDocWithAI(docId: string, options = { updateApplicationDocument: true }) {
-    const requiredDoc = await fetchRequiredDocumentById(docId, { 
-        id: true, name: true, documentType: true, file: true, companyId: true 
+    // 1. Fetch document and explicitly include Company and Application data
+    const requiredDoc: any = await prisma.requiredDocument.findUnique({
+        where: { id: docId },
+        include: { 
+            company: true,
+            applications: true // This ensures application data is available
+        }
     });
 
     if (!requiredDoc) throw new Error(`Required document not found: ${docId}`);
 
     const ocrText = await runOCROnPDFBuffer(requiredDoc.file as Buffer, "application/pdf");
     const cleanOcr = ocrText.toUpperCase();
+    
+    // Use the application name (e.g., "Network Service Provider") as the RURA category
+    const category = requiredDoc.application?.name || "Application Service Provider";
 
     let validationResult: any = { status: "REJECTED", confidence: 0, reasons: [] };
     let localPassed = false;
+    let regulatoryEvidence: string[] = [];
 
-    // --- FORGIVING LOCAL VALIDATION ---
+    // --- 2. REGULATORY FUZZY MATCH (The "Receptionist" Logic) ---
+    const categoryKeywords = RURA_REGULATIONS[category] || [];
+    const matchedKeywords = categoryKeywords.filter(kw => cleanOcr.includes(kw));
+    
+    // We expect at least 2 key regulatory markers to prove categorical match
+    const hasCategoryProof = matchedKeywords.length >= 2;
+    if (hasCategoryProof) {
+        regulatoryEvidence.push(`RURA Check: Verified ${matchedKeywords.join(", ")} for ${category}`);
+    }
+
+    // --- 3. DYNAMIC FUZZY MATCH (RDB Certificate) ---
     if (requiredDoc.documentType === 'RDB_CERTIFICATE') {
-        // 1. Check for ANY of the header keywords (don't require all at once) 
-        const headerKeywords = ["RWANDA", "DEVELOPMENT BOARD", "REGISTRAR GENERAL"];
+        const headerKeywords = ["RWANDA", "DEVELOPMENT BOARD", "REGISTRAR"];
         const foundHeaderCount = headerKeywords.filter(word => cleanOcr.includes(word)).length;
 
-        // 2. Fuzzy Match for Company Name and Code 
-        // This looks for "URBAN CAD" regardless of the "Ltd" part
-        const hasName = cleanOcr.includes("URBAN CAD"); 
-        const hasCode = cleanOcr.includes("116944820");
+        const expectedName = requiredDoc.company?.name?.toUpperCase() || "";
+        const expectedTIN = requiredDoc.company?.TIN || "";
+        
+        const nameMatch = expectedName && cleanOcr.includes(expectedName.split(' ')[0]); 
+        const codeMatch = expectedTIN && cleanOcr.includes(expectedTIN);
 
-        if (foundHeaderCount >= 2 && hasName && hasCode) {
+        if (foundHeaderCount >= 2 && nameMatch && codeMatch) {
             localPassed = true;
-            console.log("Local Override Triggered: Certificate verified by keywords.");
+            console.log(`Dynamic Match Success: ${expectedName}`);
         }
     }
 
     try {
-        validationResult = await validateTemplateWithLLM(ocrText, requiredDoc.documentType);
+        // 4. Pass category to the updated AI function
+        validationResult = await validateTemplateWithLLM(ocrText, requiredDoc.documentType, category);
         
-        // If our local check is good, we don't care what the AI says
+        // Categorical enforcement: Reject if document doesn't match the applied category
+        if (!hasCategoryProof && requiredDoc.documentType !== 'RDB_CERTIFICATE') {
+            validationResult.status = "REJECTED";
+            validationResult.reasons.push(`CATEGORICAL MISMATCH: No ${category} evidence found.`);
+        }
+
         if (localPassed) {
             validationResult.status = "APPROVED";
             validationResult.templateMatch = true;
             validationResult.confidence = 1.0;
-            validationResult.reasons = ["Verified via local match"];
+            validationResult.reasons = [...(validationResult.reasons || []), "Verified via Dynamic Local Match", ...regulatoryEvidence];
         }
     } catch (err: any) {
         if (localPassed) {
-            validationResult = { status: "APPROVED", templateMatch: true, confidence: 1.0 };
+            validationResult = { 
+                status: "APPROVED", 
+                templateMatch: true, 
+                confidence: 0.9, 
+                reasons: ["AI Error: Fallback to Local Proof"] 
+            };
         } else {
             throw err;
         }
     }
 
-    // Update status based on our final determination
     const finalStatus = (validationResult.status === "APPROVED") ? "APPROVED" : "REJECTED";
 
     if (options.updateApplicationDocument) {
