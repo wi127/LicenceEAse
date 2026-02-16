@@ -1,9 +1,3 @@
-// src/model/template.ts
-
-/**
- * RURA Regulatory Checkpoints per Category. 
- * The system uses these to verify that the document content matches the applied license.
- */
 export const RURA_REGULATIONS: Record<string, string[]> = {
     "Network Service Provider": [
         "99.9% UPTIME",

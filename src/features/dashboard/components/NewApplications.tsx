@@ -1,9 +1,39 @@
+import { fetchApplications } from '@/action/Application'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { applications } from '@/features/applications/schema/applicationSchema'
 import React from 'react'
 
-export default function NewApplications() {
+export default async function NewApplications() {
+  const { data: applications } = await fetchApplications(
+    {
+      id: true,
+      name: true,
+      createdAt: true,
+      company: {
+        select: {
+          operator: {
+            select: {
+              username: true
+            }
+          }
+        }
+      },
+      LicenseApplication: {
+        select: {
+          status: true,
+          reason: true
+        },
+        take: 1
+      }
+    },
+    undefined,
+    5,
+    0,
+    { createdAt: 'desc' }
+  )
+
   return (
     <Card>
       <CardHeader>
@@ -18,20 +48,42 @@ export default function NewApplications() {
                 <TableHead>License</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date Submitted</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Reason</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {applications.map((application,index) => 
-                  <TableRow key={index}>
-                  <TableCell>{application.user}</TableCell>
-                  <TableCell>{application.license}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 text-xs font-medium text-white rounded-md ${application.status === 'approved' ? 'bg-green-500 dark:bg-green-600' : application.status === 'rejected' ? 'bg-red-500 dark:bg-red-600' : 'bg-gray-500 dark:bg-gray-600'}`}>{application.status}</span>
+              {applications.length > 0 ? (
+                applications.map((application) => {
+                  const licenseApp = application.LicenseApplication[0]
+                  const status = licenseApp?.status || 'PENDING'
+                  const reason = licenseApp?.reason || '-'
+
+                  return (
+                    <TableRow key={application.id}>
+                      <TableCell>{application.company?.operator?.username || 'Unknown User'}</TableCell>
+                      <TableCell>{application.name}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={status === 'REJECTED' ? 'destructive' : 'secondary'}
+                          className={status === 'APPROVED' ? 'bg-green-500 hover:bg-green-600' : ''}
+                        >
+                          {status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(application.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="max-w-[200px] truncate" title={status === 'REJECTED' ? reason : ''}>
+                        {status === 'REJECTED' ? reason : '-'}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                    No new applications found.
                   </TableCell>
-                  <TableCell>{application.date}</TableCell>
                 </TableRow>
-                )}
+              )}
             </TableBody>
           </Table>
         </div>
