@@ -5,8 +5,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import React from 'react'
 
-export default async function NewApplications() {
-  const { data: applications } = await fetchApplications(
+import ReasonCell from './ReasonCell'
+import { Prisma } from '@prisma/client'
+
+import PaginationControls from './PaginationControls'
+
+interface NewApplicationsProps {
+  filterStatus?: string
+  page?: number
+  limit?: number
+}
+
+export default async function NewApplications({ filterStatus, page = 1, limit = 5 }: NewApplicationsProps) {
+  const whereClause: Prisma.ApplicationWhereInput = filterStatus
+    ? {
+      LicenseApplication: {
+        some: {
+          status: filterStatus as any // Casting to match enum, validation handled by Prisma or ignored if invalid
+        }
+      }
+    }
+    : {}
+
+  const skip = (page - 1) * limit
+
+  const { data: applications, pagination } = await fetchApplications(
     {
       id: true,
       name: true,
@@ -28,16 +51,20 @@ export default async function NewApplications() {
         take: 1
       }
     },
-    undefined,
-    5,
-    0,
+    whereClause,
+    limit,
+    skip,
     { createdAt: 'desc' }
   )
+
+  const totalPages = Math.ceil(pagination.total / limit)
+  const hasNextPage = page < totalPages
+  const hasPrevPage = page > 1
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>New Applications</CardTitle>
+        <CardTitle>New Applications {filterStatus ? `(${filterStatus})` : ''}</CardTitle>
       </CardHeader>
       <CardContent>
         <div>
@@ -56,7 +83,7 @@ export default async function NewApplications() {
                 applications.map((application) => {
                   const licenseApp = application.LicenseApplication[0]
                   const status = licenseApp?.status || 'PENDING'
-                  const reason = licenseApp?.reason || '-'
+                  const reason = licenseApp?.reason || null
 
                   return (
                     <TableRow key={application.id}>
@@ -71,8 +98,8 @@ export default async function NewApplications() {
                         </Badge>
                       </TableCell>
                       <TableCell>{new Date(application.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell className="max-w-[200px] truncate" title={status === 'REJECTED' ? reason : ''}>
-                        {status === 'REJECTED' ? reason : '-'}
+                      <TableCell>
+                        <ReasonCell reason={reason} />
                       </TableCell>
                     </TableRow>
                   )
@@ -80,12 +107,22 @@ export default async function NewApplications() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
-                    No new applications found.
+                    No {filterStatus ? filterStatus.toLowerCase() : 'new'} applications found.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+
+          {pagination.total > 0 && (
+            <PaginationControls
+              hasNextPage={hasNextPage}
+              hasPrevPage={hasPrevPage}
+              total={pagination.total}
+              page={page}
+              limit={limit}
+            />
+          )}
         </div>
       </CardContent>
     </Card>
