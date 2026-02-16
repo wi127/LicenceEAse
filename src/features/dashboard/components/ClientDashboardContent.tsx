@@ -13,11 +13,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 
-export function ClientDashboardContent({ userId, companyId, profileId, initialApplications = [] }: { userId: string, companyId: string, profileId: string, initialApplications?: any[] }) {
+export function ClientDashboardContent({ userId, companyId, profileId, initialApplications = [], initialAlerts = [] }: { userId: string, companyId: string, profileId: string, initialApplications?: any[], initialAlerts?: any[] }) {
   const router = useRouter()
 
   const [tab, setTab] = useState('dashboard')
   const [applications, setApplications] = useState<any[]>(initialApplications)
+  const [alerts, setAlerts] = useState<any[]>(initialAlerts)
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
@@ -108,6 +109,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
       onLogout={handleLogout}
       darkMode={darkMode}
       user={userProfile?.user || null}
+      notificationCount={alerts.length}
     >
 
       {tab === 'dashboard' && (
@@ -151,8 +153,69 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
               >
                 View All Licenses
               </button>
+              <button
+                onClick={() => setTab('notifications')}
+                className='border border-gray-300 text-gray-700 dark:text-gray-300 dark:border-gray-600 px-6 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium relative'
+              >
+                Notifications
+                {alerts.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {alerts.length}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {tab === 'notifications' && (
+        <div className='px-6 py-4'>
+          <h2 className='text-2xl font-bold mb-6'>Notifications & Alerts</h2>
+
+          {alerts.length === 0 ? (
+            <div className='text-center py-12'>
+              <div className='text-gray-400 text-6xl mb-4'>🔔</div>
+              <h3 className='text-xl font-semibold text-gray-900 mb-2'>No New Notifications</h3>
+              <p className='text-gray-600 mb-6'>You're all caught up! No pending actions or alerts.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {alerts.map((alert) => (
+                <div key={alert.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${alert.type === 'payment' ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10' : 'border-gray-200 dark:border-gray-700'
+                  }`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`p-2 rounded-full flex-shrink-0 ${alert.type === 'payment' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'
+                      }`}>
+                      {alert.type === 'payment' ? (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{alert.title}</h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-1">{alert.message}</p>
+                      <p className="text-xs text-gray-500">{new Date(alert.date).toLocaleDateString()} at {new Date(alert.date).toLocaleTimeString()}</p>
+                    </div>
+                  </div>
+
+                  {alert.type === 'payment' && (
+                    <button
+                      onClick={() => router.push(alert.actionUrl)}
+                      className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium whitespace-nowrap"
+                    >
+                      Pay Now
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { User, LayoutDashboard, FileText, Settings, LogOut } from 'lucide-react'
+import { User, LayoutDashboard, FileText, Settings, LogOut, Bell } from 'lucide-react'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import ClientSidebarLink from './ClientSidebarLink'
 
@@ -9,9 +9,10 @@ interface ClientSidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
   onLogout: () => void
+  notificationCount?: number
 }
 
-export default function ClientSidebar({ activeTab, onTabChange, onLogout }: ClientSidebarProps) {
+export default function ClientSidebar({ activeTab, onTabChange, onLogout, notificationCount = 0 }: ClientSidebarProps) {
   return (
     <aside className='flex flex-col px-4 h-dvh'>
       <div className='py-6'>
@@ -41,6 +42,13 @@ export default function ClientSidebar({ activeTab, onTabChange, onLogout }: Clie
           label='licenses'
           icon={<FileText className='size-5' />}
           active={activeTab === 'licenses'}
+        />
+        <ClientSidebarLink
+          onClick={() => onTabChange('notifications')}
+          label='notifications'
+          icon={<Bell className='size-5' />}
+          active={activeTab === 'notifications'}
+          badge={notificationCount}
         />
         <ClientSidebarLink
           onClick={() => onTabChange('settings')}

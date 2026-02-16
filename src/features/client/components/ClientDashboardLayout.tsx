@@ -11,6 +11,7 @@ interface ClientDashboardLayoutProps extends PropsWithChildren {
   darkMode: boolean
   loading: boolean
   user: { username: string } | null
+  notificationCount?: number
 }
 
 export default function ClientDashboardLayout({
@@ -18,15 +19,17 @@ export default function ClientDashboardLayout({
   activeTab,
   onTabChange,
   onLogout,
-  darkMode
+  darkMode,
+  notificationCount = 0
 }: ClientDashboardLayoutProps) {
   return (
     <div className={`${darkMode ? 'dark' : ''}`}>
       <div className='grid grid-cols-[256px,1fr] items-start min-h-screen bg-background text-foreground'>
-        <ClientSidebar 
+        <ClientSidebar
           activeTab={activeTab}
           onTabChange={onTabChange}
           onLogout={onLogout}
+          notificationCount={notificationCount}
         />
         <div className='h-dvh flex flex-col'>
           <ClientNavbar />

@@ -7,6 +7,8 @@ import { Suspense } from "react";
 import { fetchClientApplications as getClientApps } from "@/action/Application";
 import { getSessionUser as getUser } from "@/action/User";
 
+import { fetchNotifications } from '@/action/Notification'
+
 export default async function ClientDashboard() {
   const { user } = await getUser()
   if (!user) {
@@ -21,6 +23,28 @@ export default async function ClientDashboard() {
   const profileId = profileRes?.id ?? '';
 
   let applications: any[] = [];
+  let alerts: any[] = [];
+
+  // Fetch System Notifications
+  const { data: systemNotifications } = await fetchNotifications({
+    id: true,
+    message: true,
+    createdAt: true,
+    read: true,
+    type: true
+  }, { userId: user.id }, 10);
+
+  if (systemNotifications) {
+    alerts = [...alerts, ...systemNotifications.map(n => ({
+      id: n.id,
+      type: 'system',
+      title: 'System Notification',
+      message: n.message,
+      date: n.createdAt.toISOString(),
+      read: n.read
+    }))];
+  }
+
   if (companyId) {
     const apps = await getClientApps(companyId);
     applications = apps.map(app => {
@@ -32,6 +56,27 @@ export default async function ClientDashboard() {
 
         if (anyRejected) status = 'rejected';
         else if (allApproved) status = 'approved';
+      }
+
+      // Check for pending payment
+      // Logic: If application fee > 0 and no successful payment exists
+      const paymentStatus = app.Payment?.status;
+      const needsPayment = app.applicationFee > 0 && paymentStatus !== 'SUCCESS';
+
+      if (needsPayment) {
+        alerts.push({
+          id: `payment-${app.id}`,
+          type: 'payment',
+          title: 'Pending Payment',
+          message: `Action Required: Payment of $${app.applicationFee} for ${app.name} is pending.`,
+          date: app.createdAt.toISOString(),
+          actionUrl: `/client-dashboard/payment?applicationId=${app.id}&licenseType=${encodeURIComponent(app.name)}&fees=${app.applicationFee}`,
+          metadata: {
+            applicationId: app.id,
+            licenseType: app.name,
+            fees: app.applicationFee
+          }
+        });
       }
 
       return {
@@ -50,6 +95,9 @@ export default async function ClientDashboard() {
     });
   }
 
+  // Sort alerts by date desc
+  alerts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <ClientDashboardContent
@@ -57,6 +105,7 @@ export default async function ClientDashboard() {
         companyId={companyId}
         profileId={profileId}
         initialApplications={applications}
+        initialAlerts={alerts}
       />
     </Suspense>
   )

@@ -2,35 +2,32 @@
 
 import { ReactNode } from "react"
 
-interface Props {
-  onClick: () => void
+interface ClientSidebarLinkProps {
   label: string
+  active?: boolean
+  onClick?: () => void
   icon: ReactNode
-  active: boolean
+  badge?: number
 }
 
-export default function ClientSidebarLink({ onClick, label, icon, active }: Props) {
+export default function ClientSidebarLink({ label, active, onClick, icon, badge }: ClientSidebarLinkProps) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 p-2 transition-all w-full ${
-        active ? 'bg-white dark:bg-gray-700 rounded-xl shadow-sm' : ''
-      }`}
+      className={`sidebar-link relative w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${active
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+        }`}
     >
-      <span
-        className={`p-1.5 rounded-lg shadow transition-all ${
-          active ? 'bg-primary text-primary-foreground' : 'bg-white dark:bg-gray-800 text-primary'
-        }`}
-      >
+      <div className="flex items-center gap-3">
         {icon}
-      </span>
-      <span
-        className={`capitalize tracking-wide font-semibold transition-all ${
-          active ? 'dark:text-gray-100' : 'text-muted-foreground dark:text-gray-300'
-        }`}
-      >
-        {label}
-      </span>
+        <span className="capitalize">{label}</span>
+      </div>
+      {badge && badge > 0 ? (
+        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+          {badge}
+        </span>
+      ) : null}
     </button>
   )
 }

@@ -81,7 +81,8 @@ export const fetchClientApplications = cache(async (companyId: string) => {
                          include: {
                               documentType: { select: { name: true, documentType: true } }
                          }
-                    }
+                    },
+                    Payment: { select: { status: true } }
                }
           });
           return res;
