@@ -23,11 +23,11 @@ export default async function page(props: AdminDashboardProps) {
   return (
     <main className='px-4 grid gap-8'>
       <DashboardStatsWidget activeStatus={status} />
+      {status && <NewApplications filterStatus={status} page={page} />}
       <div className='grid lg:grid-cols-2 gap-6'>
         <ApplicationsChart />
         {/* <RenewalsChart /> */}
       </div>
-      {status && <NewApplications filterStatus={status} page={page} />}
     </main>
   )
 }

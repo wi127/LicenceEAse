@@ -16,6 +16,12 @@ export default async function EditApplicationPage({ params }: PageProps) {
         id: true,
         name: true,
         description: true,
+        LicenseApplication: {
+            select: {
+                id: true,
+                status: true,
+            },
+        },
         processingTime: true,
         validityMonths: true,
         applicationFee: true,
@@ -25,7 +31,7 @@ export default async function EditApplicationPage({ params }: PageProps) {
         notFound()
     }
 
-    // @ts-ignore - casting prisma result to form expectation
+
     return (
         <div className="container py-10">
             <ApplicationForm initialData={application} isEdit={true} />

@@ -11,15 +11,17 @@ import { toast } from 'sonner'
 import { updateApplication, createApplication } from '@/action/Application'
 import { Loader2 } from 'lucide-react'
 
-// Basic type for form, can extend as needed from Prisma result
 type ApplicationData = {
     id?: string
     name: string
     description: string
+    LicenseApplication: {
+        id: string
+        status: string
+    }[]
     processingTime: number
     validityMonths: number
     applicationFee: number
-    // companyId: string // Handling company selection might be needed for create, but optionally for edit
 }
 
 interface ApplicationFormProps {
@@ -33,13 +35,12 @@ export default function ApplicationForm({ initialData, isEdit = false }: Applica
     const [formData, setFormData] = useState<ApplicationData>({
         name: initialData?.name || '',
         description: initialData?.description || '',
+        LicenseApplication: initialData?.LicenseApplication || [],
         processingTime: initialData?.processingTime || 0,
         validityMonths: initialData?.validityMonths || 0,
         applicationFee: initialData?.applicationFee || 0,
         id: initialData?.id
     })
-
-    // We are missing 'Textarea' component in ui, might need to create it or use Input for now or standard textarea
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -59,18 +60,31 @@ export default function ApplicationForm({ initialData, isEdit = false }: Applica
             let success = false
 
             if (isEdit && formData.id) {
-                const { id, ...data } = formData
-                // @ts-ignore - simplistic casting for now
-                const res = await updateApplication(id, data as any)
+                const { id, LicenseApplication, ...data } = formData
+
+                // Construct the update payload to handle the relation
+                // We only update the first license application if it exists
+                const updateData: any = { ...data };
+
+                if (LicenseApplication && LicenseApplication.length > 0) {
+                    const firstApp = LicenseApplication[0];
+                    if (firstApp.id) {
+                        updateData.LicenseApplication = {
+                            update: {
+                                where: { id: firstApp.id },
+                                data: { status: firstApp.status }
+                            }
+                        };
+                    }
+                }
+
+                const res = await updateApplication(id, updateData)
                 if (res) success = true
             } else {
-                // Create - tricky without companyId if it's required. 
-                // For now focusing on Edit as requested "same features ... delete, edit". 
-                // Create might need a company selector.
-
-                // Ensure to cast or validate structure matches Prisma input
-                // @ts-ignore
-                const res = await createApplication(formData as any)
+                // For create, we might need to handle LicenseApplication creation differently
+                // But for now focusing on the edit flow which caused the error
+                const { LicenseApplication, ...data } = formData
+                const res = await createApplication(data as any)
                 if (res && res.success) success = true
             }
 
@@ -117,6 +131,25 @@ export default function ApplicationForm({ initialData, isEdit = false }: Applica
                             value={formData.description}
                             onChange={handleChange}
                             placeholder="Description"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="status">Status</Label>
+                        <Input
+                            id="status"
+                            name="status"
+                            value={formData.LicenseApplication[0]?.status || ''}
+                            onChange={(e) => {
+                                const newStatus = e.target.value;
+                                setFormData(prev => ({
+                                    ...prev,
+                                    LicenseApplication: prev.LicenseApplication.map((app, index) =>
+                                        index === 0 ? { ...app, status: newStatus } : app
+                                    )
+                                }));
+                            }}
+                            placeholder="Status"
                         />
                     </div>
 
