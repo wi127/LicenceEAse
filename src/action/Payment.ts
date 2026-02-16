@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePayment } from "./RevalidatePage";
 import { cache } from "react";
 import Stripe from "stripe";
+import { createNotification } from "./Notification";
 
 export async function upsertPayment(data: { applicationId: string, userId: string, amount: number, currency: string, stripeIntentId: string }) {
      try {
@@ -46,10 +47,27 @@ export async function createPayment(data: Prisma.PaymentCreateInput) {
      }
 }
 
+
+
+// ... existing imports
+
+// ...
+
 export async function updatePayment(id: string, data: Prisma.PaymentUpdateInput) {
      try {
-          const res = await prisma.payment.update({ where: { id }, data });
+          const res = await prisma.payment.update({ where: { id }, data, include: { application: true } });
           if (res) await revalidatePayment();
+
+          if (res && data.status === 'SUCCESS') {
+               await createNotification({
+                    user: { connect: { id: res.userId } },
+                    type: "PAYMENT_STATUS",
+                    message: `Payment of ${res.amount} ${res.currency} for ${res.application?.name || 'Application'} successfully processed.`,
+                    read: false,
+                    status: "UNREAD"
+               });
+          }
+
           return res;
      } catch (error) {
           console.log(`Error updating Payment with id: ${id}`, error);
