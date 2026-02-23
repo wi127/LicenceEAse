@@ -61,7 +61,7 @@ export default async function ClientDashboard() {
       // Check for pending payment
       // Logic: If application fee > 0 and no successful payment exists
       const paymentStatus = app.Payment?.status;
-      const needsPayment = app.applicationFee > 0 && paymentStatus !== 'SUCCESS';
+      const needsPayment = app.applicationFee > 0 && paymentStatus !== 'SUCCESS' && status === 'pending';
 
       if (needsPayment) {
         alerts.push({
