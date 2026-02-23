@@ -24,15 +24,15 @@ interface User {
 }
 
 interface CompanyInfo {
-    name: string
-    country: string
-    TIN: string
-    legalType: ELegalType
-    address: string | null
-    phone: string | null
-    emailCompany: string | null
-    createdAt: string
-  }
+  name: string
+  country: string
+  TIN: string
+  legalType: ELegalType
+  address: string | null
+  phone: string | null
+  emailCompany: string | null
+  createdAt: string
+}
 
 interface CompanyRepresentativesTabProps {
   companyInfo: CompanyInfo
@@ -47,7 +47,7 @@ interface CompanyRepresentativesTabProps {
 export default function CompanyRepresentativesTab({
   companyInfo,
   representatives,
-  user, 
+  user,
   onUpdateCompany,
   onUpdateRepresentatives,
   companyId,
@@ -88,13 +88,17 @@ export default function CompanyRepresentativesTab({
 
   const handleSaveCompany = async () => {
     try {
-      
+      // Prepare clean payload for Prisma
       const payload = {
-        ...companyFormData,
+        name: companyFormData.name,
+        country: companyFormData.country,
+        TIN: companyFormData.TIN,
+        legalType: companyFormData.legalType,
         address: companyFormData.address || '',
         phone: companyFormData.phone || '',
         emailCompany: companyFormData.emailCompany || '',
-        }
+      }
+
       // Save to backend
       const res = await updateCompany(companyId, payload)
 
@@ -225,7 +229,7 @@ export default function CompanyRepresentativesTab({
             <label className='block text-sm font-medium mb-2'>Nationality</label>
             {isEditingCompany ? (
               <select
-                name="nationality"
+                name="country"
                 value={companyFormData.country}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
@@ -260,7 +264,7 @@ export default function CompanyRepresentativesTab({
               </select>
             ) : (
               <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>
-                {companyFormData.legalType ? 
+                {companyFormData.legalType ?
                   companyFormData.legalType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
                   : 'Not provided'
                 }
@@ -273,7 +277,7 @@ export default function CompanyRepresentativesTab({
             {isEditingCompany ? (
               <input
                 type="text"
-                name="identificationNumber"
+                name="TIN"
                 value={companyFormData.TIN}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
@@ -303,7 +307,7 @@ export default function CompanyRepresentativesTab({
             {isEditingCompany ? (
               <input
                 type="tel"
-                name="telephone"
+                name="phone"
                 value={companyFormData.phone || ''}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
@@ -318,7 +322,7 @@ export default function CompanyRepresentativesTab({
             {isEditingCompany ? (
               <input
                 type="email"
-                name="email"
+                name="emailCompany"
                 value={companyFormData.emailCompany || ''}
                 onChange={handleCompanyInputChange}
                 className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
@@ -330,17 +334,9 @@ export default function CompanyRepresentativesTab({
 
           <div>
             <label className='block text-sm font-medium mb-2'>Creation Date</label>
-            {isEditingCompany ? (
-              <input
-                type="date"
-                name="creationDate"
-                value={companyFormData.createdAt}
-                onChange={handleCompanyInputChange}
-                className='w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600'
-              />
-            ) : (
-              <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>{companyInfo.createdAt || 'Not provided'}</p>
-            )}
+            <p className='p-3 bg-gray-50 dark:bg-gray-700 rounded-md'>
+              {companyFormData.createdAt ? new Date(companyFormData.createdAt).toLocaleDateString() : 'Not provided'}
+            </p>
           </div>
         </div>
 
