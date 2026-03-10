@@ -111,6 +111,79 @@ export default function AdminReportsClient({
         URL.revokeObjectURL(url);
     }
 
+    const exportToPDF = () => {
+        if (!initialData || initialData.length === 0) return;
+
+        import('jspdf').then(({ default: jsPDF }) => {
+            import('jspdf-autotable').then(({ default: autoTable }) => {
+                const doc = new jsPDF();
+
+                // Add header
+                doc.setFontSize(20);
+                doc.setTextColor(40, 40, 40);
+                doc.text('Application Reports', 14, 22);
+
+                // Add filters info
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                const filtersText = `Filters - Status: ${status || 'All'}, Type: ${type || 'All'}, Dates: ${startDate || 'N/A'} to ${endDate || 'N/A'}`;
+                doc.text(filtersText, 14, 30);
+
+                // Add generation date
+                doc.setFontSize(8);
+                doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 35);
+
+                const tableData = initialData.map((row) => {
+                    const company = row.applicationType?.company;
+                    const operator = company?.operator;
+                    const appType = row.applicationType?.name;
+
+                    return [
+                        // Business Info
+                        `Name: ${company?.name || 'N/A'}\nTIN: ${company?.TIN || 'N/A'}\nRep: ${operator?.username || 'N/A'}`,
+                        // Contact Info
+                        `Tel: ${company?.phone || 'N/A'}\nEmail: ${company?.emailCompany || 'N/A'}`,
+                        // Status Info
+                        `Type: ${appType || 'N/A'}\nStatus: ${row.status || 'N/A'}\nDate: ${new Date(row.createdAt).toLocaleDateString()}`,
+                        // Reason
+                        row.reason ? `Reason: ${row.reason}` : 'No reason provided'
+                    ]
+                });
+
+                autoTable(doc, {
+                    startY: 40,
+                    head: [['Business Information', 'Contact', 'Business Status', 'Additional Details']],
+                    body: tableData,
+                    theme: 'grid',
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 4,
+                        lineColor: [200, 200, 200],
+                        lineWidth: 0.1,
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185],
+                        textColor: 255,
+                        fontSize: 10,
+                        fontStyle: 'bold',
+                        halign: 'left'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 50 },
+                        1: { cellWidth: 45 },
+                        2: { cellWidth: 45 },
+                        3: { cellWidth: 'auto' },
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 247, 250]
+                    },
+                });
+
+                doc.save(`admin_reports_${new Date().toISOString().split('T')[0]}.pdf`);
+            });
+        });
+    }
+
     return (
         <div className="space-y-6">
             {/* Filters Section */}
@@ -171,10 +244,14 @@ export default function AdminReportsClient({
                 </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
                 <Button onClick={exportToCSV} variant="secondary" className="gap-2" disabled={initialData.length === 0}>
                     <Download className="size-4" />
                     Export to CSV
+                </Button>
+                <Button onClick={exportToPDF} className="gap-2" disabled={initialData.length === 0}>
+                    <Download className="size-4" />
+                    Export to PDF
                 </Button>
             </div>
 
