@@ -36,6 +36,11 @@ export default function DashboardSidebar() {
           label='documents'
           icon={<File className='size-5' />}
         />
+        <SidebarLink
+          href='/admin-dashboard/reports'
+          label='reports'
+          icon={<FileText className='size-5' />}
+        />
       </div>
     </aside>
   )
