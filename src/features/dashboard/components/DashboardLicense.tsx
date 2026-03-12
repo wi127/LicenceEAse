@@ -142,7 +142,7 @@ export default function DashboardLicense() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">License Fee:</span>
-                      <span className="font-medium">{category.fees.license} RWF</span>
+                      <span className="font-medium">{category.fees.license.toLocaleString()} rwf</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Validity:</span>
@@ -208,15 +208,15 @@ export default function DashboardLicense() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Fee Structure</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.application} RWF</div>
+                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.application.toLocaleString()} rwf</div>
                     <div className="text-sm text-gray-500">Application Fee</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.license} RWF</div>
+                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.license.toLocaleString()} rwf</div>
                     <div className="text-sm text-gray-500">License Fee</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.renewal} RWF</div>
+                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.renewal.toLocaleString()} rwf</div>
                     <div className="text-sm text-gray-500">Renewal Fee</div>
                   </div>
                   <div className="text-center">
