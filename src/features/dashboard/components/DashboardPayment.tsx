@@ -251,10 +251,13 @@ export default function Payment() {
 
   // Format currency display
   const formatCurrency = (amount: number, currencyCode: string) => {
+    if (currencyCode === 'RWF') {
+      return `${amount.toLocaleString('en-US')} rwf(${Math.floor(amount / 1000)}k)`
+    }
     const currency = currencies.find(c => c.code === currencyCode)
     return `${currency?.symbol}${amount.toLocaleString('en-US', {
-      minimumFractionDigits: currencyCode === 'RWF' ? 0 : 2,
-      maximumFractionDigits: currencyCode === 'RWF' ? 0 : 2
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     })}`
   }
 

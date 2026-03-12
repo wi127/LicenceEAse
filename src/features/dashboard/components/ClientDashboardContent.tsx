@@ -333,7 +333,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     </svg>
                   </div>
                   <div className='text-right'>
-                    <div className='text-sm font-medium text-blue-600 dark:text-blue-400'>RWF 350</div>
+                    <div className='text-sm font-medium text-blue-600 dark:text-blue-400'>RWF 500k</div>
                     <div className='text-xs text-gray-500'>License Fee</div>
                   </div>
                 </div>
@@ -380,7 +380,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     </svg>
                   </div>
                   <div className='text-right'>
-                    <div className='text-sm font-medium text-green-600 dark:text-green-400'>RWF 400</div>
+                    <div className='text-sm font-medium text-green-600 dark:text-green-400'>RWF 600k</div>
                     <div className='text-xs text-gray-500'>License Fee</div>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     </svg>
                   </div>
                   <div className='text-right'>
-                    <div className='text-sm font-medium text-purple-600 dark:text-purple-400'>RWF 250</div>
+                    <div className='text-sm font-medium text-purple-600 dark:text-purple-400'>RWF 400k</div>
                     <div className='text-xs text-gray-500'>License Fee</div>
                   </div>
                 </div>

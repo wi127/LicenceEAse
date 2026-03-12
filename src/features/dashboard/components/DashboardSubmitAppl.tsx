@@ -44,8 +44,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 50,
-        renewal: 350
+        application: 50000,
+        renewal: 350000
       },
       validityMonths: 2
     },
@@ -64,8 +64,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 50,
-        renewal: 400
+        application: 50000,
+        renewal: 400000
       },
       validityMonths: 2
     },
@@ -84,8 +84,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 50,
-        renewal: 250
+        application: 50000,
+        renewal: 250000
       },
       validityMonths: 3
     }
@@ -367,7 +367,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
               <div>
                 <span className="text-blue-600 font-medium">Application Fee:</span>
                 <br />
-                <span className="text-blue-800">{selectedCategory.fees.application} RWF</span>
+                <span className="text-blue-800">{selectedCategory.fees.application.toLocaleString()} rwf({selectedCategory.fees.application / 1000}k)</span>
               </div>
               <div>
                 <span className="text-blue-600 font-medium">Validity:</span>
