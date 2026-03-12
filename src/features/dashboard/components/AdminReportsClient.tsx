@@ -63,6 +63,7 @@ export default function AdminReportsClient({
         if (!initialData || initialData.length === 0) return;
 
         const headers = [
+            '#',
             'Company Name',
             'TIN',
             'Representative',
@@ -78,12 +79,13 @@ export default function AdminReportsClient({
             headers.join(','), // header row
         ];
 
-        initialData.forEach((row) => {
+        initialData.forEach((row, index) => {
             const company = row.applicationType?.company;
             const operator = company?.operator;
             const appType = row.applicationType?.name;
 
             const rowData = [
+                `"${index + 1}"`,
                 `"${company?.name || ''}"`,
                 `"${company?.TIN || ''}"`,
                 `"${operator?.username || ''}"`,
@@ -111,77 +113,135 @@ export default function AdminReportsClient({
         URL.revokeObjectURL(url);
     }
 
-    const exportToPDF = () => {
+    const exportToPDF = async () => {
         if (!initialData || initialData.length === 0) return;
 
-        import('jspdf').then(({ default: jsPDF }) => {
-            import('jspdf-autotable').then(({ default: autoTable }) => {
-                const doc = new jsPDF();
+        const { default: jsPDF } = await import('jspdf');
+        const { default: autoTable } = await import('jspdf-autotable');
 
-                // Add header
-                doc.setFontSize(20);
-                doc.setTextColor(40, 40, 40);
-                doc.text('Application Reports', 14, 22);
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.width;
+        let startY = 10;
 
-                // Add filters info
-                doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100);
-                const filtersText = `Filters - Status: ${status || 'All'}, Type: ${type || 'All'}, Dates: ${startDate || 'N/A'} to ${endDate || 'N/A'}`;
-                doc.text(filtersText, 14, 30);
-
-                // Add generation date
-                doc.setFontSize(8);
-                doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 35);
-
-                const tableData = initialData.map((row) => {
-                    const company = row.applicationType?.company;
-                    const operator = company?.operator;
-                    const appType = row.applicationType?.name;
-
-                    return [
-                        // Business Info
-                        `Name: ${company?.name || 'N/A'}\nTIN: ${company?.TIN || 'N/A'}\nRep: ${operator?.username || 'N/A'}`,
-                        // Contact Info
-                        `Tel: ${company?.phone || 'N/A'}\nEmail: ${company?.emailCompany || 'N/A'}`,
-                        // Status Info
-                        `Type: ${appType || 'N/A'}\nStatus: ${row.status || 'N/A'}\nDate: ${new Date(row.createdAt).toLocaleDateString()}`,
-                        // Reason
-                        row.reason ? `Reason: ${row.reason}` : 'No reason provided'
-                    ]
-                });
-
-                autoTable(doc, {
-                    startY: 40,
-                    head: [['Business Information', 'Contact', 'Business Status', 'Additional Details']],
-                    body: tableData,
-                    theme: 'grid',
-                    styles: {
-                        fontSize: 9,
-                        cellPadding: 4,
-                        lineColor: [200, 200, 200],
-                        lineWidth: 0.1,
-                    },
-                    headStyles: {
-                        fillColor: [41, 128, 185],
-                        textColor: 255,
-                        fontSize: 10,
-                        fontStyle: 'bold',
-                        halign: 'left'
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 50 },
-                        1: { cellWidth: 45 },
-                        2: { cellWidth: 45 },
-                        3: { cellWidth: 'auto' },
-                    },
-                    alternateRowStyles: {
-                        fillColor: [245, 247, 250]
-                    },
-                });
-
-                doc.save(`admin_reports_${new Date().toISOString().split('T')[0]}.pdf`);
-            });
+        // Load RURA Logo
+        const loadImg = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new window.Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
         });
+
+        try {
+            const logo = await loadImg('/rura-logoBG.png');
+            const imgWidth = logo.naturalWidth || logo.width;
+            const imgHeight = logo.naturalHeight || logo.height;
+            const ratio = imgWidth / imgHeight;
+            
+            // Set max height for the logo
+            const targetHeight = 18;
+            const targetWidth = targetHeight * ratio;
+            
+            // Adding Logo centered horizontally
+            doc.addImage(logo, 'PNG', (pageWidth - targetWidth) / 2, startY, targetWidth, targetHeight); 
+            
+            startY += targetHeight + 6; // Space below logo
+        } catch (e) {
+            console.error("Failed to load logo", e);
+            startY += 8;
+        }
+
+        // Letterhead Details - Centered
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(33, 37, 41);
+        doc.text('RWANDA UTILITIES REGULATORY AUTHORITY (RURA)', pageWidth / 2, startY, { align: 'center' });
+
+        startY += 6;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(80, 80, 80);
+        doc.text('Toll Free: 3988 | 2222 (Transport)', pageWidth / 2, startY, { align: 'center' });
+        
+        startY += 5;
+        doc.text('Phone: (+250) 252 584 562 | Fax: (+250) 252 584 563', pageWidth / 2, startY, { align: 'center' });
+        
+        startY += 5;
+        doc.text('P.o.Box: 7289 Kigali-Rwanda | Email: info@rura.rw', pageWidth / 2, startY, { align: 'center' });
+
+        startY += 8;
+
+        // Line separator
+        doc.setDrawColor(41, 128, 185); // Blue line to match header
+        doc.setLineWidth(1);
+        doc.line(14, startY, 196, startY);
+
+        startY += 10;
+
+        // Title
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(40, 40, 40);
+        doc.text('APPLICATION REPORTS', pageWidth / 2, startY, { align: 'center' });
+
+        startY += 8;
+
+        // Filters info
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        const filtersText = `Filters - Status: ${status || 'All'} | Type: ${type || 'All'} | Dates: ${startDate || 'N/A'} to ${endDate || 'N/A'}`;
+        doc.text(filtersText, 14, startY);
+        
+        startY += 5;
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, startY);
+
+        // Table Data
+        const tableData = initialData.map((row, index) => {
+            const company = row.applicationType?.company;
+            const operator = company?.operator;
+            const appType = row.applicationType?.name;
+
+            return [
+                (index + 1).toString(),
+                `Name: ${company?.name || 'N/A'}\nTIN: ${company?.TIN || 'N/A'}\nRep: ${operator?.username || 'N/A'}`,
+                `Tel: ${company?.phone || 'N/A'}\nEmail: ${company?.emailCompany || 'N/A'}`,
+                `Type: ${appType || 'N/A'}\nStatus: ${row.status || 'N/A'}\nDate: ${new Date(row.createdAt).toLocaleDateString()}`,
+                row.reason ? `Reason: ${row.reason}` : 'No reason provided'
+            ]
+        });
+
+        autoTable(doc, {
+            startY: startY + 4,
+            head: [['No.', 'Business Information', 'Contact', 'Business Status', 'Additional Details']],
+            body: tableData,
+            theme: 'grid',
+            styles: {
+                font: 'helvetica',
+                fontSize: 9,
+                cellPadding: 4,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.1,
+            },
+            headStyles: {
+                fillColor: [41, 128, 185],
+                textColor: 255,
+                fontSize: 10,
+                fontStyle: 'bold',
+                halign: 'left'
+            },
+            columnStyles: {
+                0: { cellWidth: 10, halign: 'center' },
+                1: { cellWidth: 45 },
+                2: { cellWidth: 40 },
+                3: { cellWidth: 40 },
+                4: { cellWidth: 'auto' },
+            },
+            alternateRowStyles: {
+                fillColor: [245, 247, 250]
+            },
+        });
+
+        doc.save(`admin_reports_${new Date().toISOString().split('T')[0]}.pdf`);
     }
 
     return (
@@ -260,6 +320,7 @@ export default function AdminReportsClient({
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-[50px]">#</TableHead>
                             <TableHead>Company</TableHead>
                             <TableHead>TIN</TableHead>
                             <TableHead>Representative</TableHead>
@@ -273,13 +334,14 @@ export default function AdminReportsClient({
                     <TableBody>
                         {initialData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={9} className="text-center py-6 text-muted-foreground">
                                     No applications found matching the selected filters.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            initialData.map((row) => (
+                            initialData.map((row, index) => (
                                 <TableRow key={row.id}>
+                                    <TableCell>{index + 1}</TableCell>
                                     <TableCell className="font-medium">
                                         {row.applicationType?.company?.name || 'N/A'}
                                     </TableCell>
