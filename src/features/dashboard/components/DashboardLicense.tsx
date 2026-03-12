@@ -30,9 +30,9 @@ export default function DashboardLicense() {
       ],
       processingTime: '3-5 days',
       fees: {
-        application: 50,
-        license: 500,
-        renewal: 350
+        application: 50000,
+        license: 500000,
+        renewal: 350000
       },
       validity: '2 years'
     },
@@ -58,9 +58,9 @@ export default function DashboardLicense() {
       ],
       processingTime: '3-5 days',
       fees: {
-        application: 50,
-        license: 600,
-        renewal: 400
+        application: 50000,
+        license: 600000,
+        renewal: 400000
       },
       validity: '3 years'
     },
@@ -86,9 +86,9 @@ export default function DashboardLicense() {
       ],
       processingTime: '3-5 days',
       fees: {
-        application: 50,
-        license: 400,
-        renewal: 250
+        application: 50000,
+        license: 400000,
+        renewal: 250000
       },
       validity: '5 years'
     }

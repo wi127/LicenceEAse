@@ -68,7 +68,7 @@ export default async function ClientDashboard() {
           id: `payment-${app.id}`,
           type: 'payment',
           title: 'Pending Payment',
-          message: `Action Required: Payment of $${app.applicationFee} for ${app.name} is pending.`,
+          message: `Action Required: Payment for ${app.name} is pending.`,
           date: app.createdAt.toISOString(),
           actionUrl: `/client-dashboard/payment?applicationId=${app.id}&licenseType=${encodeURIComponent(app.name)}&fees=${app.applicationFee}`,
           metadata: {
@@ -76,6 +76,17 @@ export default async function ClientDashboard() {
             licenseType: app.name,
             fees: app.applicationFee
           }
+        });
+      }
+
+      if (status === 'rejected') {
+        const rejectionReason = docs.find(d => d.status === 'REJECTED')?.reason || 'Application rejected during technical evaluation.';
+        alerts.push({
+          id: `rejection-${app.id}`,
+          type: 'rejection',
+          title: 'Application Rejected',
+          message: `Your application for ${app.name} has been rejected. Reason: ${rejectionReason}`,
+          date: app.createdAt.toISOString(),
         });
       }
 

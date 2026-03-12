@@ -182,14 +182,24 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
           ) : (
             <div className="space-y-4">
               {alerts.map((alert) => (
-                <div key={alert.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${alert.type === 'payment' ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10' : 'border-gray-200 dark:border-gray-700'
+                <div key={alert.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                  alert.type === 'payment' ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10' : 
+                  alert.type === 'rejection' ? 'border-red-200 bg-red-50 dark:bg-red-900/10' : 
+                  'border-gray-200 dark:border-gray-700'
                   }`}>
                   <div className="flex items-start gap-4">
-                    <div className={`p-2 rounded-full flex-shrink-0 ${alert.type === 'payment' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'
+                    <div className={`p-2 rounded-full flex-shrink-0 ${
+                      alert.type === 'payment' ? 'bg-yellow-100 text-yellow-600' : 
+                      alert.type === 'rejection' ? 'bg-red-100 text-red-600' : 
+                      'bg-blue-100 text-blue-600'
                       }`}>
                       {alert.type === 'payment' ? (
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      ) : alert.type === 'rejection' ? (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       ) : (
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
