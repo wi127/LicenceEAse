@@ -22,7 +22,7 @@ export async function validateDocWithAI(docId: string, options = { updateApplica
     const cleanOcr = ocrText.toUpperCase();
     
     // Use the application name (e.g., "Network Service Provider") as the RURA category
-    const category = requiredDoc.application?.name || "Application Service Provider";
+    const category = requiredDoc.applications?.name || "Application Service Provider";
 
     let validationResult: any = { status: "REJECTED", confidence: 0, reasons: [] };
     let localPassed = false;
