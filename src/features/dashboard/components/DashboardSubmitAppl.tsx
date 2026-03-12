@@ -44,8 +44,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 80,
-        renewal: 75
+        application: 50,
+        renewal: 350
       },
       validityMonths: 2
     },
@@ -64,8 +64,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 75,
-        renewal: 70
+        application: 50,
+        renewal: 400
       },
       validityMonths: 2
     },
@@ -82,10 +82,10 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
         'Billing and payment processing systems documentation',
         'Network security and monitoring capabilities'
       ],
-      processingTime: 10,
+      processingTime: 5,
       fees: {
-        application: 100,
-        renewal: 80
+        application: 50,
+        renewal: 250
       },
       validityMonths: 3
     }
@@ -367,7 +367,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
               <div>
                 <span className="text-blue-600 font-medium">Application Fee:</span>
                 <br />
-                <span className="text-blue-800">${selectedCategory.fees.application}</span>
+                <span className="text-blue-800">{selectedCategory.fees.application} RWF</span>
               </div>
               <div>
                 <span className="text-blue-600 font-medium">Validity:</span>

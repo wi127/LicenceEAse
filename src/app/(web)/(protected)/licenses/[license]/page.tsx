@@ -123,10 +123,10 @@ export default function LicensePage() {
               <h4 className="font-medium">First time application</h4>
               <ul className="list-disc list-inside grid gap-1">
                 <li className="text-muted-foreground text-xs">
-                  Application fee: {license.first_time_application_fee} USD
+                  Application fee: {license.first_time_application_fee} RWF
                 </li>
                 <li className="text-muted-foreground text-xs">
-                  License fee: {license.first_time_license_fee} USD
+                  License fee: {license.first_time_license_fee} RWF
                 </li>
               </ul>
             </div>
@@ -134,10 +134,10 @@ export default function LicensePage() {
               <h4 className="font-medium">Renewal</h4>
               <ul className="list-disc list-inside grid gap-1">
                 <li className="text-muted-foreground text-xs">
-                  Application fee: {license.renewal_application_fee} USD
+                  Application fee: {license.renewal_application_fee} RWF
                 </li>
                 <li className="text-muted-foreground text-xs">
-                  License fee: {license.renewal_license_fee} USD
+                  License fee: {license.renewal_license_fee} RWF
                 </li>
               </ul>
             </div>

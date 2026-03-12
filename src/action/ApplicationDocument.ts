@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidateApplicationDocument  } from "./RevalidatePage";
 import { cache } from "react";
+import { createNotification } from "./Notification";
 
 export async function createApplicationDocument(data: Prisma.ApplicationDocumentCreateInput) {
   try {
@@ -17,11 +18,38 @@ export async function createApplicationDocument(data: Prisma.ApplicationDocument
   }
 }
 
-export async function updateApplicationDocument (id:string, data:Prisma.ApplicationDocumentUpdateInput) {
+export async function updateApplicationDocument(id: string, data: Prisma.ApplicationDocumentUpdateInput) {
      try {
-          const res = await prisma.applicationDocument.update({where: {id}, data});
-          if(res) await revalidateApplicationDocument();
-          return res; 
+          const res = await prisma.applicationDocument.update({
+               where: { id },
+               data,
+               include: {
+                    applicationType: {
+                         include: {
+                              company: true
+                         }
+                    },
+                    documentType: true
+               }
+          });
+
+          if (res) await revalidateApplicationDocument();
+
+          if (res && data.status === 'REJECTED') {
+               const userId = res.applicationType.company.operatorId;
+               const docName = res.documentType.name;
+               const reason = (data.reason as string) || res.reason || "No reason provided";
+
+               await createNotification({
+                    user: { connect: { id: userId } },
+                    type: "APPLICATION_STATUS",
+                    message: `Document "${docName}" for application "${res.applicationType.name}" was rejected. Reason: ${reason}`,
+                    read: false,
+                    status: "UNREAD"
+               });
+          }
+
+          return res;
      } catch (error) {
           console.log(`Error updating ApplicationDocument with id: ${id}`, error);
           return null;

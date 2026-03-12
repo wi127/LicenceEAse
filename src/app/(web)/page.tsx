@@ -19,8 +19,8 @@ export default function Home() {
         'Data protection compliance certificate',
         'Service level agreement templates'
       ],
-      processingTime: '14-21 days',
-      fee: '$250'
+      processingTime: '3-5 days',
+      fee: '500 RWF'
     },
     {
       id: 'network-infra',
@@ -32,8 +32,8 @@ export default function Home() {
         'Safety compliance certificates',
         'Site acquisition agreements'
       ],
-      processingTime: '21-30 days',
-      fee: '$400'
+      processingTime: '3-5 days',
+      fee: '600 RWF'
     },
     {
       id: 'network-service',
@@ -45,8 +45,8 @@ export default function Home() {
         'Quality of service guarantees',
         'Interconnection agreements'
       ],
-      processingTime: '30-45 days',
-      fee: '$500'
+      processingTime: '3-5 days',
+      fee: '400 RWF'
     }
   ]
 

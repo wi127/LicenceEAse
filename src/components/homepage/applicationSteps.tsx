@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mail, Award, IdCard, Building, FileText, Wrench, DollarSign, Calendar, Clock, FileCheck } from "lucide-react"
+import { Mail, Award, IdCard, Building, FileText, Wrench, Banknote, Calendar, Clock, FileCheck } from "lucide-react"
 
 export default function ApplicationSteps() {
   const documents = [
@@ -40,17 +40,17 @@ export default function ApplicationSteps() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <DollarSign className="w-4 h-4" />
+              <Banknote className="w-4 h-4" />
               Payable Fee
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <div className="text-lg font-bold text-primary mb-1">$11,000</div>
-              <p className="text-xs text-muted-foreground">Total fee (USD)</p>
+              <div className="text-lg font-bold text-primary mb-1">450 RWF</div>
+              <p className="text-xs text-muted-foreground">Total fee (RWF)</p>
               <div className="text-xs mt-2 space-y-1">
-                <p>App: $1,000</p>
-                <p>License: $10,000</p>
+                <p>App: 50 RWF</p>
+                <p>License: 400 RWF</p>
                 <p className="text-green-600">Same for renewal</p>
               </div>
             </div>
@@ -84,7 +84,7 @@ export default function ApplicationSteps() {
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary mb-1">60</div>
+              <div className="text-2xl font-bold text-primary mb-1">5</div>
               <p className="text-xs text-muted-foreground">Days</p>
               <p className="text-xs mt-2">🕒 Maximum processing time</p>
             </div>

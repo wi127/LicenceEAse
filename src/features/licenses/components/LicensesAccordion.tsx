@@ -128,8 +128,8 @@ export default function LicensesAccordion() {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-2">
-                    <div>App Fee: ${license.first_time_application_fee}</div>
-                    <div>License Fee: ${license.first_time_license_fee}</div>
+                    <div>App Fee: {license.first_time_application_fee} RWF</div>
+                    <div>License Fee: {license.first_time_license_fee} RWF</div>
                     <div>Validity: {license.validity} years</div>
                     <div>Processing: {license.processing_time} days</div>
                   </div>

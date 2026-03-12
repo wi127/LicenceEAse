@@ -198,9 +198,9 @@ export default function Payment() {
 
   // Currency exchange rates (USD as base)
   const exchangeRates: { [key: string]: number } = {
-    USD: 1,       // 1 USD = 1 USD
-    EUR: 0.92,    // 1 USD = 0.92 EUR
-    RWF: 1320     // 1 USD = 1320 RWF (current exchange rate)
+    USD: 0.00076,
+    EUR: 0.0007,
+    RWF: 1
   }
 
   const currencies = [

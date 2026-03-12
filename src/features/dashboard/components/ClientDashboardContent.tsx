@@ -291,7 +291,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                         <strong>Files:</strong> {app.files?.length || 0} document(s)
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        <strong>Processing Time:</strong> 14-21 days
+                        <strong>Processing Time:</strong> 3-5 days
                       </p>
                     </div>
                   </div>
@@ -333,7 +333,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     </svg>
                   </div>
                   <div className='text-right'>
-                    <div className='text-sm font-medium text-blue-600 dark:text-blue-400'>$250</div>
+                    <div className='text-sm font-medium text-blue-600 dark:text-blue-400'>RWF 350</div>
                     <div className='text-xs text-gray-500'>License Fee</div>
                   </div>
                 </div>
@@ -351,7 +351,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>
                       <path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z' clipRule='evenodd' />
                     </svg>
-                    Processing: 14-21 days
+                    Processing: 3-5 days
                   </div>
                   <div className='flex items-center text-xs text-gray-500'>
                     <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>
@@ -380,7 +380,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     </svg>
                   </div>
                   <div className='text-right'>
-                    <div className='text-sm font-medium text-green-600 dark:text-green-400'>$400</div>
+                    <div className='text-sm font-medium text-green-600 dark:text-green-400'>RWF 400</div>
                     <div className='text-xs text-gray-500'>License Fee</div>
                   </div>
                 </div>
@@ -398,7 +398,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>
                       <path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z' clipRule='evenodd' />
                     </svg>
-                    Processing: 21-30 days
+                    Processing: 3-5 days
                   </div>
                   <div className='flex items-center text-xs text-gray-500'>
                     <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>
@@ -427,7 +427,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     </svg>
                   </div>
                   <div className='text-right'>
-                    <div className='text-sm font-medium text-purple-600 dark:text-purple-400'>$500</div>
+                    <div className='text-sm font-medium text-purple-600 dark:text-purple-400'>RWF 250</div>
                     <div className='text-xs text-gray-500'>License Fee</div>
                   </div>
                 </div>
@@ -445,7 +445,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>
                       <path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z' clipRule='evenodd' />
                     </svg>
-                    Processing: 30-45 days
+                    Processing: 3-5 days
                   </div>
                   <div className='flex items-center text-xs text-gray-500'>
                     <svg className='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 20 20'>

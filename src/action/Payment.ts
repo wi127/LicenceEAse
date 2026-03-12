@@ -113,9 +113,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const exchangeRates: { [key: string]: number } = {
-     USD: 1,
-     EUR: 0.92,
-     RWF: 1320
+     USD: 0.00076,
+     EUR: 0.00070,
+     RWF: 1
 };
 
 export async function createPaymentIntentAction(applicationId: string, currency: string) {
@@ -137,6 +137,9 @@ export async function createPaymentIntentAction(applicationId: string, currency:
           let stripeAmount = displayAmount;
           if (['USD', 'EUR', 'GBP'].includes(currency)) {
                stripeAmount = Math.round(displayAmount * 100);
+          } else if (currency === 'RWF') {
+               // RWF is a zero-decimal currency in Stripe
+               stripeAmount = Math.round(displayAmount);
           } else {
                stripeAmount = Math.round(displayAmount);
           }

@@ -28,11 +28,11 @@ export default function DashboardLicense() {
         'Submit evidence of staff technical training and certifications',
         'Demonstrate compliance with international data protection standards'
       ],
-      processingTime: '5-10 business days',
+      processingTime: '3-5 days',
       fees: {
         application: 50,
-        license: 250,
-        renewal: 200
+        license: 500,
+        renewal: 350
       },
       validity: '2 years'
     },
@@ -56,11 +56,11 @@ export default function DashboardLicense() {
         'Include emergency response and maintenance procedures',
         'Submit proof of technical staff qualifications and training'
       ],
-      processingTime: '10-25 business days',
+      processingTime: '3-5 days',
       fees: {
-        application: 75,
-        license: 400,
-        renewal: 300
+        application: 50,
+        license: 600,
+        renewal: 400
       },
       validity: '3 years'
     },
@@ -84,11 +84,11 @@ export default function DashboardLicense() {
         'Submit evidence of network monitoring and security measures',
         'Provide financial projections and sustainability plans'
       ],
-      processingTime: '7-21 business days',
+      processingTime: '3-5 days',
       fees: {
-        application: 100,
-        license: 500,
-        renewal: 400
+        application: 50,
+        license: 400,
+        renewal: 250
       },
       validity: '5 years'
     }
@@ -142,7 +142,7 @@ export default function DashboardLicense() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">License Fee:</span>
-                      <span className="font-medium">${category.fees.license}</span>
+                      <span className="font-medium">{category.fees.license} RWF</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Validity:</span>
@@ -208,15 +208,15 @@ export default function DashboardLicense() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Fee Structure</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">${selectedCategoryData.fees.application}</div>
+                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.application} RWF</div>
                     <div className="text-sm text-gray-500">Application Fee</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">${selectedCategoryData.fees.license}</div>
+                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.license} RWF</div>
                     <div className="text-sm text-gray-500">License Fee</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">${selectedCategoryData.fees.renewal}</div>
+                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.renewal} RWF</div>
                     <div className="text-sm text-gray-500">Renewal Fee</div>
                   </div>
                   <div className="text-center">
