@@ -1,6 +1,5 @@
 import { fetchCompanyByUserId } from "@/action/Company";
 import { fetchProfileByUserId } from "@/action/Profile";
-import { fetchClientApplications } from "@/action/Application";
 import { ClientDashboardContent } from "@/features/dashboard/components/ClientDashboardContent";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

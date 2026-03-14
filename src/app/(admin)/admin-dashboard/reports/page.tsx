@@ -15,12 +15,10 @@ export default async function ReportsPage({
     const status = typeof p.status === 'string' ? p.status as ApplicationStatus : undefined;
     const type = typeof p.type === 'string' ? p.type : undefined;
 
-    // Build where clause
     const whereClause: any = {};
 
     if (startDate && endDate) {
         if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-            // End date should be inclusive of the day
             const adjustedEndDate = new Date(endDate);
             adjustedEndDate.setHours(23, 59, 59, 999);
             whereClause.createdAt = {

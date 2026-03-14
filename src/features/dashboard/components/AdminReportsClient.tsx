@@ -230,7 +230,7 @@ export default function AdminReportsClient({
                 halign: 'left'
             },
             columnStyles: {
-                0: { cellWidth: 10, halign: 'center' },
+                0: { cellWidth: 18, halign: 'center' },
                 1: { cellWidth: 45 },
                 2: { cellWidth: 40 },
                 3: { cellWidth: 40 },

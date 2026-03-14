@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { User, LayoutDashboard, FileText, Settings, LogOut, Bell } from 'lucide-react'
+import { User, LayoutDashboard, FileText, ClipboardList, Settings, LogOut, Bell } from 'lucide-react'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import ClientSidebarLink from './ClientSidebarLink'
 
@@ -34,7 +34,7 @@ export default function ClientSidebar({ activeTab, onTabChange, onLogout, notifi
         <ClientSidebarLink
           onClick={() => onTabChange('applications')}
           label='applications'
-          icon={<FileText className='size-5' />}
+          icon={<ClipboardList className='size-5' />}
           active={activeTab === 'applications'}
         />
         <ClientSidebarLink
