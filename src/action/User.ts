@@ -10,7 +10,6 @@ import { ESessionFetchMode } from "@/common/enums";
 import { getServerSession, Session } from "next-auth";
 import { authOptions } from "@/common/authOptions";
 import { SessionUserSelect, TSessionUserSelect } from "@/lib/types/session";
-import { cookies } from "next/headers"
 
 
 export async function createUser(data: Prisma.UserCreateInput) {
@@ -92,7 +91,40 @@ export async function getSessionUser (mode: ESessionFetchMode=ESessionFetchMode.
     if(!sessionUser) return {user:null, session};
     if (!sessionUser.email) return {user:null, session: session};
     const user = await fetchUserByEmail(sessionUser.email, SessionUserSelect);
-    
-    
-    return {user, session};
+    return { user, session };
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const { user } = await getSessionUser(ESessionFetchMode.SESSION_AND_USER);
+    if (!user) {
+      return { success: false, message: "Unauthorized: No active session found." };
+    }
+
+    const userData = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { password: true }
+    });
+
+    if (!userData || !userData.password) {
+      return { success: false, message: "User not found or password not set." };
+    }
+
+    const isMatch = await verifyPassword(currentPassword, userData.password);
+    if (!isMatch) {
+      return { success: false, message: "Incorrect current password." };
+    }
+
+    const hashedNewPassword = await encryptPassword(newPassword);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedNewPassword }
+    });
+
+    await revalidateUser();
+    return { success: true, message: "Password updated successfully." };
+  } catch (error) {
+    console.error("Error in changePassword:", error);
+    return { success: false, message: "An unexpected error occurred while changing password." };
+  }
 }

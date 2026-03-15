@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff, Save, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { changePassword } from '@/action/User'
 
 export default function ChangePasswordPage() {
   const router = useRouter()
@@ -34,22 +35,10 @@ export default function ChangePasswordPage() {
 
     setIsLoading(true)
     try {
-      // Here you would typically call your backend API
-      const token = localStorage.getItem('authToken')
-      const response = await fetch('http://127.0.0.1:5002/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        })
-      })
+      const response = await changePassword(passwordData.currentPassword, passwordData.newPassword);
 
-      if (response.ok) {
-        setPasswordMessage('Password updated successfully')
+      if (response.success) {
+        setPasswordMessage(response.message)
         setPasswordData({
           currentPassword: '',
           newPassword: '',
@@ -59,8 +48,7 @@ export default function ChangePasswordPage() {
           router.push('/client-dashboard')
         }, 2000)
       } else {
-        const error = await response.json()
-        setPasswordMessage(error.message || 'Failed to update password')
+        setPasswordMessage(response.message)
       }
     } catch (error) {
       setPasswordMessage('Failed to update password')
