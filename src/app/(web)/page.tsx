@@ -20,7 +20,7 @@ export default function Home() {
         'Service level agreement templates'
       ],
       processingTime: '3-5 days',
-      fee: '500 RWF'
+      fee: '500k RWF'
     },
     {
       id: 'network-infra',
@@ -33,7 +33,7 @@ export default function Home() {
         'Site acquisition agreements'
       ],
       processingTime: '3-5 days',
-      fee: '600 RWF'
+      fee: '600k RWF'
     },
     {
       id: 'network-service',
@@ -46,7 +46,7 @@ export default function Home() {
         'Interconnection agreements'
       ],
       processingTime: '3-5 days',
-      fee: '400 RWF'
+      fee: '400k RWF'
     }
   ]
 

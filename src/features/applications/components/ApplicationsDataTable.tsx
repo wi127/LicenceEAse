@@ -10,6 +10,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -156,6 +162,16 @@ export default function ApplicationsDataTable() {
 
   const totalPages = Math.ceil(total / pageSize)
 
+  // Group applications by company ID for this page
+  const groupedRows = rows.reduce((acc, app) => {
+    const key = app.company?.name || 'Unassigned'
+    if (!acc[key]) {
+      acc[key] = []
+    }
+    acc[key].push(app)
+    return acc
+  }, {} as Record<string, Application[]>)
+
   return (
     <div className="space-y-4">
       {/* Filters & Actions */}
@@ -174,155 +190,157 @@ export default function ApplicationsDataTable() {
       </div>
 
       <div className="rounded-md border bg-card">
-        <Table className='min-w-[1000px]'>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Applicant</TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => toggleSort('name')} className="-ml-4">
-                  License Type <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Company</TableHead>
-              <TableHead>Processing Time</TableHead>
-              <TableHead>Fee</TableHead>
-              <TableHead>Validity</TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => toggleSort('createdAt')} className="-ml-4">
-                  Created At <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    <span>Loading...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center text-red-500">
-                  {error}
-                </TableCell>
-              </TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
-                  No applications found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((application) => {
-                const licenseApp = application.LicenseApplication[0]
-                const status = licenseApp?.status || 'PENDING'
-                const reason = licenseApp?.reason || null
+        {loading ? (
+          <div className="flex h-24 items-center justify-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span>Loading...</span>
+          </div>
+        ) : error ? (
+          <div className="flex h-24 items-center justify-center text-red-500">
+            {error}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="flex h-24 items-center justify-center text-muted-foreground">
+            No applications found.
+          </div>
+        ) : (
+          <Accordion type="multiple" defaultValue={Object.keys(groupedRows)} className="w-full">
+            {Object.entries(groupedRows).map(([companyName, apps], companyIndex) => {
+              const operatorInfo = apps[0]?.company?.operator
 
-                return (
-                  <TableRow key={application.id}>
-                    <TableCell>
-                      <div className='flex items-center gap-3'>
-                        <div className='bg-blue-100 dark:bg-blue-900 p-2 rounded-lg'>
-                          <User className='size-4 text-blue-600 dark:text-blue-400' />
-                        </div>
-                        <div>
-                          <div className='font-medium'>{application.company?.operator.username}</div>
-                          <div className='text-sm text-gray-600 dark:text-gray-400'>{application.company?.operator.email}</div>
-                        </div>
+              return (
+                <AccordionItem value={companyName} key={companyName} className={companyIndex === Object.keys(groupedRows).length - 1 ? 'border-b-0' : ''}>
+                  <AccordionTrigger className="px-4 hover:bg-muted/50 hover:no-underline transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Building className="size-5 text-blue-600 dark:text-blue-400" />
+                        <span className="font-bold text-lg">{companyName}</span>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='font-medium'>{application.name}</div>
-                      <div className='text-sm text-gray-600 dark:text-gray-400 line-clamp-1 max-w-[200px]'>
-                        {application.description}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={status === 'REJECTED' ? 'destructive' : 'secondary'}
-                        className={status === 'APPROVED' ? 'bg-green-500 hover:bg-green-600' : ''}
-                      >
-                        {status}
+                      <Badge variant="secondary" className="px-2 py-0.5 pointer-events-none">
+                        {apps.length} {apps.length === 1 ? 'application' : 'applications'}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <ReasonCell reason={reason} />
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <Building className='size-4 text-gray-500' />
-                        <span>{application.company?.name || 'N/A'}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span>{application.processingTime || 0} days</span>
-                    </TableCell>
-                    <TableCell>
-                      <span>{application.applicationFee || 0}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span>{application.validityMonths || 0} months</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex flex-col'>
-                        <span className="text-sm">{new Date(application.createdAt).toLocaleDateString()}</span>
-                        <span className="text-xs text-muted-foreground">{new Date(application.createdAt).toLocaleTimeString()}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin-dashboard/applications/${application.id}`} className="flex items-center cursor-pointer">
-                              <Edit className="mr-2 h-4 w-4" /> Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-red-600 focus:text-red-600">
-                                <Trash className="mr-2 h-4 w-4" /> Delete
-                              </div>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the application
-                                  <strong> {application.name}</strong>.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(application.id)} className="bg-destructive hover:bg-destructive/90">
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
+                      {operatorInfo && (
+                         <div className="hidden sm:flex items-center gap-2 ml-4 text-sm text-muted-foreground font-normal">
+                           <User className="size-4" />
+                           <span>{operatorInfo.username} ({operatorInfo.email})</span>
+                         </div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-0 pb-0">
+                    <Table className='min-w-[1000px]'>
+                      <TableHeader className="bg-muted/30">
+                        <TableRow>
+                          <TableHead className="w-[300px]">
+                            <Button variant="ghost" onClick={() => toggleSort('name')} className="-ml-4">
+                              License Type <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead>Processing Time</TableHead>
+                          <TableHead>Fee</TableHead>
+                          <TableHead>Validity</TableHead>
+                          <TableHead>
+                            <Button variant="ghost" onClick={() => toggleSort('createdAt')} className="-ml-4">
+                              Created At <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {apps.map((application) => {
+                          const licenseApp = application.LicenseApplication[0]
+                          const status = licenseApp?.status || 'PENDING'
+                          const reason = licenseApp?.reason || null
+
+                          return (
+                            <TableRow key={application.id} className="border-0 border-b last:border-b-0">
+                              <TableCell>
+                                <div className='font-medium'>{application.name}</div>
+                                <div className='text-sm text-gray-600 dark:text-gray-400 line-clamp-1 max-w-[250px]'>
+                                  {application.description}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={status === 'REJECTED' ? 'destructive' : 'secondary'}
+                                  className={status === 'APPROVED' ? 'bg-green-500 hover:bg-green-600' : ''}
+                                >
+                                  {status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <ReasonCell reason={reason} />
+                              </TableCell>
+                              <TableCell>
+                                <span>{application.processingTime || 0} days</span>
+                              </TableCell>
+                              <TableCell>
+                                <span>{application.applicationFee || 0}</span>
+                              </TableCell>
+                              <TableCell>
+                                <span>{application.validityMonths || 0} months</span>
+                              </TableCell>
+                              <TableCell>
+                                <div className='flex flex-col'>
+                                  <span className="text-sm">{new Date(application.createdAt).toLocaleDateString()}</span>
+                                  <span className="text-xs text-muted-foreground">{new Date(application.createdAt).toLocaleTimeString()}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/admin-dashboard/applications/${application.id}`} className="flex items-center cursor-pointer">
+                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                      </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-red-600 focus:text-red-600">
+                                          <Trash className="mr-2 h-4 w-4" /> Delete
+                                        </div>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the application
+                                            <strong> {application.name}</strong>.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDelete(application.id)} className="bg-destructive hover:bg-destructive/90">
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
+        )}
       </div>
 
       {/* Pagination Controls */}

@@ -2,6 +2,17 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { 
+  ArrowLeft, 
+  Monitor, 
+  Building2, 
+  Globe, 
+  CheckCircle2, 
+  Info, 
+  Clock3, 
+  ShieldCheck, 
+  ArrowRight
+} from 'lucide-react'
 
 export default function DashboardLicense() {
   const router = useRouter()
@@ -11,6 +22,7 @@ export default function DashboardLicense() {
     {
       id: 'application-service-provider',
       title: 'Application Service Provider',
+      icon: <Monitor className="w-8 h-8" />,
       description: 'Provide software applications and services to customers over the internet, including SaaS, web applications, and cloud-based solutions.',
       requirements: [
         'Valid business registration certificate',
@@ -39,6 +51,7 @@ export default function DashboardLicense() {
     {
       id: 'network-infrastructure',
       title: 'Network Infrastructure',
+      icon: <Building2 className="w-8 h-8" />,
       description: 'Deploy, maintain, and operate network infrastructure including fiber optic cables, wireless towers, data centers, and telecommunications equipment.',
       requirements: [
         'Environmental impact assessment report',
@@ -67,6 +80,7 @@ export default function DashboardLicense() {
     {
       id: 'network-service-provider',
       title: 'Network Service Provider',
+      icon: <Globe className="w-8 h-8" />,
       description: 'Provide internet connectivity, telecommunications services, and network access to end users including ISP services, mobile networks, and enterprise connectivity.',
       requirements: [
         'Spectrum allocation request and documentation',
@@ -107,152 +121,183 @@ export default function DashboardLicense() {
   const selectedCategoryData = licenseCategories.find(cat => cat.id === selectedCategory)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+    <div className="min-h-screen">
+      <div className="px-4 sm:px-6 py-8 max-w-7xl mx-auto">
+        <div className="mb-10">
           <button 
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-800 mb-4"
+            className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors mb-6 group"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+            <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-sm group-hover:border-blue-200 dark:group-hover:border-blue-800 transition-all">
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            </div>
             Back to Dashboard
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Apply for a License</h1>
-          <p className="text-gray-600">Select the license category that best fits your business needs.</p>
+          
+          <div className='inline-flex items-center px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider mb-2'>
+            License Application
+          </div>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+            Apply for a <span className='text-blue-600 dark:text-blue-400'>License</span>
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 max-w-xl">
+            Select the license category that best fits your business needs to begin the application process.
+          </p>
         </div>
 
         {!selectedCategory ? (
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {licenseCategories.map((category) => (
               <div 
                 key={category.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 p-8 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
                 onClick={() => handleCategorySelect(category.id)}
               >
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{category.title}</h3>
-                  <p className="text-gray-600 mb-4 leading-relaxed">{category.description}</p>
-                  
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Processing Time:</span>
-                      <span className="font-medium">{category.processingTime}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">License Fee:</span>
-                      <span className="font-medium">{category.fees.license.toLocaleString()} rwf</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Validity:</span>
-                      <span className="font-medium">{category.validity}</span>
-                    </div>
+                <div className="flex items-center justify-between mb-8">
+                  <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {category.icon}
                   </div>
-
-                  <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                    Select This Category
-                  </button>
+                  <div className="text-right">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Main Fee</p>
+                    <p className="text-lg font-black text-blue-600 dark:text-blue-400">RWF {(category.fees.license / 1000).toFixed(0)}k</p>
+                  </div>
                 </div>
+
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">{category.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-8 flex-grow">
+                  {category.description}
+                </p>
+                  
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center text-blue-600">
+                      <Clock3 className="w-4 h-4" />
+                    </div>
+                    Processing: {category.processingTime}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center text-blue-600">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    Validity: {category.validity}
+                  </div>
+                </div>
+
+                <button className="w-full bg-blue-50/50 dark:bg-blue-900/20 text-blue-600 font-bold py-4 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm flex items-center justify-center gap-2">
+                  <span>Select Category</span>
+                  <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 -ml-5 group-hover:ml-0 transition-all duration-300" />
+                </button>
               </div>
             ))}
           </div>
         ) : selectedCategoryData && (
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{selectedCategoryData.title}</h2>
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 p-8 sm:p-12 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+                <div className="flex items-center gap-6">
+                  <div className="w-20 h-20 rounded-3xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    {selectedCategoryData.icon}
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">{selectedCategoryData.title}</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xl leading-relaxed">
+                      {selectedCategoryData.description}
+                    </p>
+                  </div>
+                </div>
                 <button 
                   onClick={() => setSelectedCategory(null)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="bg-gray-50 dark:bg-gray-900 px-6 py-3 rounded-2xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors whitespace-nowrap border border-gray-100 dark:border-gray-800"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  Change Category
                 </button>
               </div>
 
-              <p className="text-gray-600 mb-8 leading-relaxed">{selectedCategoryData.description}</p>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Required Documents</h3>
-                  <ul className="space-y-3">
+              <div className="grid md:grid-cols-2 gap-10 mb-12">
+                <div className="bg-gray-50/50 dark:bg-gray-900/20 rounded-[2rem] p-8 border border-gray-100 dark:border-gray-800">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-blue-600">📝</span>
+                    Required Documents
+                  </h3>
+                  <ul className="space-y-4">
                     {selectedCategoryData.requirements.map((req, index) => (
-                      <li key={index} className="flex items-start">
-                        <svg className="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-gray-700">{req}</span>
+                      <li key={index} className="flex items-start gap-4">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed">{req}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Guidelines</h3>
-                  <ul className="space-y-3">
+                <div className="bg-gray-50/50 dark:bg-gray-900/20 rounded-[2rem] p-8 border border-gray-100 dark:border-gray-800">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-blue-600">📋</span>
+                    Application Guidelines
+                  </h3>
+                  <ul className="space-y-4">
                     {selectedCategoryData.guidelines.map((guideline, index) => (
-                      <li key={index} className="flex items-start">
-                        <svg className="w-5 h-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-gray-700">{guideline}</span>
+                      <li key={index} className="flex items-start gap-4">
+                        <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-black mt-0.5 flex-shrink-0">
+                          {index + 1}
+                        </span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed">{guideline}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Fee Structure</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.application.toLocaleString()} rwf</div>
-                    <div className="text-sm text-gray-500">Application Fee</div>
+              <div className="mb-12">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 px-4">Fee Structure</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 text-center shadow-sm">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Application</p>
+                    <p className="text-2xl font-black text-gray-900 dark:text-white">{selectedCategoryData.fees.application.toLocaleString()}</p>
+                    <p className="text-xs font-bold text-blue-600 mt-1">RWF</p>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.license.toLocaleString()} rwf</div>
-                    <div className="text-sm text-gray-500">License Fee</div>
+                  <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 text-center shadow-sm">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">License Fee</p>
+                    <p className="text-2xl font-black text-gray-900 dark:text-white">{selectedCategoryData.fees.license.toLocaleString()}</p>
+                    <p className="text-xs font-bold text-blue-600 mt-1">RWF</p>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.fees.renewal.toLocaleString()} rwf</div>
-                    <div className="text-sm text-gray-500">Renewal Fee</div>
+                  <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 border border-gray-100 dark:border-gray-700 text-center shadow-sm">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Renewal</p>
+                    <p className="text-2xl font-black text-gray-900 dark:text-white">{selectedCategoryData.fees.renewal.toLocaleString()}</p>
+                    <p className="text-xs font-bold text-blue-600 mt-1">RWF</p>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{selectedCategoryData.validity}</div>
-                    <div className="text-sm text-gray-500">Validity Period</div>
+                  <div className="bg-blue-600 rounded-3xl p-6 text-center text-white shadow-lg shadow-blue-500/20">
+                    <p className="text-[10px] text-blue-200 font-bold uppercase tracking-widest mb-2">Validity</p>
+                    <p className="text-2xl font-black">{selectedCategoryData.validity}</p>
+                    <div className="flex items-center justify-center gap-1 mt-1 text-blue-200">
+                      <Clock3 className="w-3 h-3" />
+                      <p className="text-xs font-bold">Standard Term</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                <div className="flex items-center mb-3">
-                  <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <h4 className="font-semibold text-blue-900">Important Information</h4>
+              <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-[2rem] p-8 mb-12">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <Info className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-bold text-amber-900 dark:text-amber-500 text-lg">Important Information</h4>
                 </div>
-                <ul className="text-blue-800 space-y-1">
-                  <li>• Processing time: {selectedCategoryData.processingTime}</li>
-                  <li>• All documents must be submitted in PDF format</li>
-                  <li>• Applications are reviewed in the order they are received</li>
-                  <li>• You will receive email notifications about your application status</li>
+                <ul className="space-y-3 text-sm font-medium text-amber-800 dark:text-amber-600/80">
+                  <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Processing time typically takes {selectedCategoryData.processingTime}</li>
+                  <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> All uploaded documents must be clearly readable PDF files</li>
+                  <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> System reviews happen strictly on a first-come, first-served basis</li>
+                  <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> You will receive instant email notifications upon status changes</li>
                 </ul>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-800">
                 <button 
                   onClick={handleStartApplication}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-3 group"
                 >
-                  Start Application
-                </button>
-                <button 
-                  onClick={() => setSelectedCategory(null)}
-                  className="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Choose Different Category
+                  <span>Begin Application</span>
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </button>
               </div>
             </div>

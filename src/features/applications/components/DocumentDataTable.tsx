@@ -10,6 +10,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -170,6 +176,16 @@ export default function DocumentDataTable() {
 
   const totalPages = Math.ceil(total / pageSize)
 
+  // Group documents by company ID for this page
+  const groupedRows = rows.reduce((acc, doc) => {
+    const key = doc.company[0]?.name || 'Unassigned'
+    if (!acc[key]) {
+      acc[key] = []
+    }
+    acc[key].push(doc)
+    return acc
+  }, {} as Record<string, RequiredDocument[]>)
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -187,149 +203,151 @@ export default function DocumentDataTable() {
       </div>
 
       <div className="rounded-md border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Company</TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => toggleSort('documentType')} className="-ml-4">
-                  Document Type <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => toggleSort('name')} className="-ml-4">
-                  File Name <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => toggleSort('createdAt')} className="-ml-4">
-                  Submitted At <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    <span>Loading...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-red-500">
-                  {error}
-                </TableCell>
-              </TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No documents found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((document) => (
-                <TableRow key={document.id}>
-                  <TableCell>
-                    <div className='flex items-start gap-3'>
-                      <div className='bg-blue-100 dark:bg-blue-900 p-2 rounded-lg'>
-                        <Building className='size-4 text-blue-600 dark:text-blue-400' />
-                      </div>
-                      <div>
-                        <div className='font-medium text-gray-900 dark:text-white'>
-                          {document.company[0]?.name || 'N/A'}
-                        </div>
-                        <div className='text-sm text-gray-600 dark:text-gray-400'>
-                          {document.company[0]?.legalType?.replace(/_/g, ' ').toUpperCase()}
-                        </div>
-                      </div>
-                    </div>
+      <div className="rounded-md border bg-card">
+        {loading ? (
+          <div className="flex h-24 items-center justify-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span>Loading...</span>
+          </div>
+        ) : error ? (
+          <div className="flex h-24 items-center justify-center text-red-500">
+            {error}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="flex h-24 items-center justify-center text-muted-foreground">
+            No documents found.
+          </div>
+        ) : (
+          <Accordion type="multiple" defaultValue={Object.keys(groupedRows)} className="w-full">
+            {Object.entries(groupedRows).map(([companyName, docs], companyIndex) => {
+              const companyInfo = docs[0]?.company[0]
 
-                  </TableCell>
-                  <TableCell>
-                    <div className='flex items-center gap-2'>
-                      <FileIcon className='size-4 text-gray-400' />
-                      <span>{document.documentType}</span>
-                    </div>
-
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span>{document.name}</span>
-                      {document.file && (
-                        <a
-                          href={URL.createObjectURL(new Blob([new Uint8Array(document.file)]))}
-                          download={document.name || "document"}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Download"
-                        >
-                          <Download className="size-4" />
-                        </a>
+              return (
+                <AccordionItem value={companyName} key={companyName} className={companyIndex === Object.keys(groupedRows).length - 1 ? 'border-b-0' : ''}>
+                  <AccordionTrigger className="px-4 hover:bg-muted/50 hover:no-underline transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Building className="size-5 text-blue-600 dark:text-blue-400" />
+                        <span className="font-bold text-lg">{companyName}</span>
+                      </div>
+                      <Badge variant="secondary" className="px-2 py-0.5 pointer-events-none">
+                        {docs.length} {docs.length === 1 ? 'document' : 'documents'}
+                      </Badge>
+                      {companyInfo && (
+                        <div className="hidden sm:flex items-center gap-2 ml-4 text-sm text-muted-foreground font-normal">
+                          <span>{companyInfo.legalType?.replace(/_/g, ' ').toUpperCase()}</span>
+                        </div>
                       )}
                     </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <div className='space-y-1'>
-                      <div className='text-sm font-medium'>
-                        {new Date(document.createdAt).toLocaleDateString()}
-                      </div>
-                      <div className='text-xs text-gray-600'>
-                        {new Date(document.createdAt).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin-dashboard/documents/${document.id}`} className="flex items-center cursor-pointer">
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-red-600 focus:text-red-600">
-                              <Trash className="mr-2 h-4 w-4" /> Delete
-                            </div>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the document
-                                <strong> {document.name}</strong>.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(document.id)} className="bg-destructive hover:bg-destructive/90">
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-0 pb-0">
+                    <Table>
+                      <TableHeader className="bg-muted/30">
+                        <TableRow>
+                          <TableHead>
+                            <Button variant="ghost" onClick={() => toggleSort('documentType')} className="-ml-4">
+                              Document Type <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead>
+                            <Button variant="ghost" onClick={() => toggleSort('name')} className="-ml-4">
+                              File Name <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead>
+                            <Button variant="ghost" onClick={() => toggleSort('createdAt')} className="-ml-4">
+                              Submitted At <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {docs.map((document) => (
+                          <TableRow key={document.id} className="border-0 border-b last:border-b-0">
+                            <TableCell>
+                              <div className='flex items-center gap-2'>
+                                <FileIcon className='size-4 text-gray-400' />
+                                <span>{document.documentType}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <span>{document.name}</span>
+                                {document.file && (
+                                  <a
+                                    href={URL.createObjectURL(new Blob([new Uint8Array(document.file)]))}
+                                    download={document.name || "document"}
+                                    className="text-blue-600 hover:text-blue-800"
+                                    title="Download"
+                                  >
+                                    <Download className="size-4" />
+                                  </a>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className='space-y-1'>
+                                <div className='text-sm font-medium'>
+                                  {new Date(document.createdAt).toLocaleDateString()}
+                                </div>
+                                <div className='text-xs text-gray-600'>
+                                  {new Date(document.createdAt).toLocaleTimeString()}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/admin-dashboard/documents/${document.id}`} className="flex items-center cursor-pointer">
+                                      <Edit className="mr-2 h-4 w-4" /> Edit
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-red-600 focus:text-red-600">
+                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                      </div>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete the document
+                                          <strong> {document.name}</strong>.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(document.id)} className="bg-destructive hover:bg-destructive/90">
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
+        )}
+      </div>
       </div>
 
       {/* Pagination Controls */}

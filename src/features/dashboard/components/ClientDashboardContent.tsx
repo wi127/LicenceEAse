@@ -11,7 +11,14 @@ import { Prisma } from "@prisma/client";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ClipboardList, Clock, CheckCircle2, XCircle, Plus, ScrollText, Bell, BellRing, Monitor, Building2, Globe, DollarSign, X, ChevronRight, Clock3, ShieldCheck, ArrowRight } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle2, XCircle, Plus, ScrollText, Bell, BellRing, Monitor, Building2, Globe, DollarSign, X, ChevronRight, Clock3, ShieldCheck, ArrowRight, FileText, Download } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge";
 
 
 export function ClientDashboardContent({ userId, companyId, profileId, initialApplications = [], initialAlerts = [] }: { userId: string, companyId: string, profileId: string, initialApplications?: any[], initialAlerts?: any[] }) {
@@ -33,6 +40,8 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
     sms: false,
     push: true
   })
+  const [selectedApplication, setSelectedApplication] = useState<any | null>(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   const toggleTheme = () => setDarkMode(!darkMode)
 
@@ -466,7 +475,13 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                   
                   <div className='p-6 bg-gray-50/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between rounded-b-[2.5rem]'>
                     <span className='text-[10px] text-gray-400 font-bold uppercase tracking-widest'>RURA EVALUATION</span>
-                    <button className='text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group/btn'>
+                    <button 
+                      onClick={() => {
+                        setSelectedApplication(app)
+                        setIsDetailsModalOpen(true)
+                      }}
+                      className='text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group/btn'
+                    >
                       View Details 
                       <ChevronRight className='w-4 h-4 transition-transform group-hover/btn:translate-x-1' />
                     </button>
@@ -579,6 +594,114 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
           onNotificationChange={handleNotificationChange}
         />
       )}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-2xl bg-white dark:bg-gray-900 rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
+          {selectedApplication && (
+            <div className="flex flex-col">
+              {/* Modal Header with Status Banner */}
+              <div className={`p-8 pb-12 ${
+                selectedApplication.status === 'approved' ? 'bg-green-500' :
+                selectedApplication.status === 'rejected' ? 'bg-red-500' :
+                'bg-blue-600'
+              } text-white relative`}>
+                <div className="flex items-center justify-between mb-6">
+                   <div className="flex items-center gap-3">
+                     <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                        <ClipboardList className="w-6 h-6 text-white" />
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Application ID</p>
+                       <p className="text-sm font-black tracking-tight">#{selectedApplication.id.substring(0, 12)}</p>
+                     </div>
+                   </div>
+                   <Badge variant="outline" className="bg-white/10 text-white border-white/20 font-bold uppercase tracking-wider px-4 py-1.5 rounded-full">
+                     {selectedApplication.status}
+                   </Badge>
+                </div>
+                <h2 className="text-3xl font-black tracking-tight mb-2">{selectedApplication.license_type}</h2>
+                <div className="flex items-center gap-4 text-sm font-bold opacity-90">
+                  <div className="flex items-center gap-2">
+                    <Clock3 className="w-4 h-4" />
+                    <span>Submitted: {new Date(selectedApplication.submitted_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-8 -mt-6 bg-white dark:bg-gray-900 rounded-t-[2.5rem] relative">
+                <div className="space-y-8">
+                  {/* Description Section */}
+                  <div>
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Service Description</h3>
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
+                      {selectedApplication.description || 'No description provided for this application.'}
+                    </p>
+                  </div>
+
+                  {/* Progress Section */}
+                  <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-3xl p-6 border border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Application Progress</h3>
+                      <span className="text-sm font-black text-blue-600 dark:text-blue-400">
+                        {selectedApplication.status === 'approved' ? '100%' : '50%'}
+                      </span>
+                    </div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className={`h-full transition-all duration-1000 ${
+                        selectedApplication.status === 'approved' ? 'bg-green-500 w-full' :
+                        selectedApplication.status === 'rejected' ? 'bg-red-500 w-full' :
+                        'bg-blue-600 w-1/2'
+                      }`}></div>
+                    </div>
+                    <p className="text-[10px] font-bold text-gray-400 mt-4 leading-relaxed">
+                      {selectedApplication.status === 'pending' ? 
+                        "Your application is currently being reviewed by the RURA technical evaluation committee." :
+                        selectedApplication.status === 'approved' ? 
+                        "This application has been fully approved. You can view your certificate in the Licenses tab." :
+                        "This application has been rejected. Please review the reasons provided by the committee."
+                      }
+                    </p>
+                  </div>
+
+                  {/* Documents Section */}
+                  {selectedApplication.files && selectedApplication.files.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Submitted Documents</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {selectedApplication.files.map((file: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-800 transition-all group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center">
+                                <FileText className="w-5 h-5" />
+                              </div>
+                              <div className="max-w-[120px]">
+                                <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{file.name || file.type}</p>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{file.type}</p>
+                              </div>
+                            </div>
+                            <button className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-blue-600 transition-colors">
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+                   <button 
+                     onClick={() => setIsDetailsModalOpen(false)}
+                     className="px-8 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-gray-900/10"
+                   >
+                     Close Details
+                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </ClientDashboardLayout>
   )
 }
