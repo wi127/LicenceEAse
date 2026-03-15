@@ -596,6 +596,7 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
       )}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
         <DialogContent className="max-w-2xl bg-white dark:bg-gray-900 rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Application Details - {selectedApplication?.license_type}</DialogTitle>
           {selectedApplication && (
             <div className="flex flex-col">
               {/* Modal Header with Status Banner */}
