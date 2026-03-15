@@ -455,9 +455,15 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                         <p className='text-[10px] text-blue-400 font-bold uppercase mb-1'>Progress</p>
                         <div className='flex items-center gap-2'>
                           <div className='flex-grow h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden'>
-                            <div className={`h-full bg-blue-600 ${app.status === 'approved' ? 'w-full' : 'w-1/2'}`}></div>
+                            <div className={`h-full bg-blue-600 ${
+                              app.status === 'approved' ? 'w-full' : 
+                              app.status === 'pending' ? 'w-1/2' : 
+                              'w-0'
+                            }`}></div>
                           </div>
-                          <span className='text-[10px] font-bold text-gray-500'>{app.status === 'approved' ? '100%' : '50%'}</span>
+                          <span className='text-[10px] font-bold text-gray-500'>
+                            {app.status === 'approved' ? '100%' : app.status === 'pending' ? '50%' : '0%'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -644,14 +650,14 @@ export function ClientDashboardContent({ userId, companyId, profileId, initialAp
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Application Progress</h3>
                       <span className="text-sm font-black text-blue-600 dark:text-blue-400">
-                        {selectedApplication.status === 'approved' ? '100%' : '50%'}
+                        {selectedApplication.status === 'approved' ? '100%' : selectedApplication.status === 'pending' ? '50%' : '0%'}
                       </span>
                     </div>
                     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div className={`h-full transition-all duration-1000 ${
                         selectedApplication.status === 'approved' ? 'bg-green-500 w-full' :
-                        selectedApplication.status === 'rejected' ? 'bg-red-500 w-full' :
-                        'bg-blue-600 w-1/2'
+                        selectedApplication.status === 'pending' ? 'bg-blue-600 w-1/2' :
+                        'bg-red-500 w-0'
                       }`}></div>
                     </div>
                     <p className="text-[10px] font-bold text-gray-400 mt-4 leading-relaxed">
