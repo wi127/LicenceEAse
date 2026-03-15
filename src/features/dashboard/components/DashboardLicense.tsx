@@ -14,7 +14,7 @@ import {
   ArrowRight
 } from 'lucide-react'
 
-export default function DashboardLicense() {
+export default function DashboardLicense({ initialApplications = [] }: { initialApplications?: any[] }) {
   const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
@@ -147,48 +147,70 @@ export default function DashboardLicense() {
 
         {!selectedCategory ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {licenseCategories.map((category) => (
-              <div 
-                key={category.id}
-                className="bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 p-8 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
-                onClick={() => handleCategorySelect(category.id)}
-              >
-                <div className="flex items-center justify-between mb-8">
-                  <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    {category.icon}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Main Fee</p>
-                    <p className="text-lg font-black text-blue-600 dark:text-blue-400">RWF {(category.fees.license / 1000).toFixed(0)}k</p>
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">{category.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-8 flex-grow">
-                  {category.description}
-                </p>
-                  
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
-                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center text-blue-600">
-                      <Clock3 className="w-4 h-4" />
+            {licenseCategories.map((category) => {
+              const existingApp = initialApplications.find(app => app.license_type === category.title);
+              const isRestricted = existingApp && (existingApp.status === 'pending' || existingApp.status === 'approved');
+              
+              return (
+                <div 
+                  key={category.id}
+                  className={`bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 p-8 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group ${isRestricted ? 'opacity-75' : 'cursor-pointer'}`}
+                  onClick={() => !isRestricted && handleCategorySelect(category.id)}
+                >
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      {category.icon}
                     </div>
-                    Processing: {category.processingTime}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
-                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center text-blue-600">
-                      <ShieldCheck className="w-4 h-4" />
+                    <div className="text-right">
+                      {isRestricted ? (
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          existingApp.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {existingApp.status === 'approved' ? 'Active License' : 'Under Review'}
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Main Fee</p>
+                          <p className="text-lg font-black text-blue-600 dark:text-blue-400">RWF {(category.fees.license / 1000).toFixed(0)}k</p>
+                        </>
+                      )}
                     </div>
-                    Validity: {category.validity}
                   </div>
-                </div>
 
-                <button className="w-full bg-blue-50/50 dark:bg-blue-900/20 text-blue-600 font-bold py-4 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm flex items-center justify-center gap-2">
-                  <span>Select Category</span>
-                  <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 -ml-5 group-hover:ml-0 transition-all duration-300" />
-                </button>
-              </div>
-            ))}
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">{category.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-8 flex-grow">
+                    {category.description}
+                  </p>
+                    
+                  <div className="space-y-4 mb-8">
+                    <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
+                      <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center text-blue-600">
+                        <Clock3 className="w-4 h-4" />
+                      </div>
+                      Processing: {category.processingTime}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-bold text-gray-500 dark:text-gray-400">
+                      <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center text-blue-600">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      Validity: {category.validity}
+                    </div>
+                  </div>
+
+                  <button 
+                    disabled={isRestricted}
+                    className={`w-full font-bold py-4 rounded-2xl transition-all duration-300 shadow-sm flex items-center justify-center gap-2 ${
+                      isRestricted 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                        : 'bg-blue-50/50 dark:bg-blue-900/20 text-blue-600 group-hover:bg-blue-600 group-hover:text-white'
+                    }`}
+                  >
+                    <span>{isRestricted ? 'Already Applied' : 'Select Category'}</span>
+                    {!isRestricted && <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 -ml-5 group-hover:ml-0 transition-all duration-300" />}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         ) : selectedCategoryData && (
           <div className="max-w-5xl mx-auto">

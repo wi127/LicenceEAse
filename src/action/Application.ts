@@ -8,6 +8,36 @@ import { cache } from "react";
 
 export async function createApplication(data: Prisma.ApplicationCreateInput) {
      try {
+          // Check if the company has an active (non-rejected) application for this license name
+          const companyId = data.company.connect?.id;
+          if (companyId) {
+               const existingApps = await prisma.application.findMany({
+                    where: {
+                         companyId,
+                         name: data.name
+                    },
+                    include: {
+                         LicenseApplication: {
+                              select: { status: true }
+                         }
+                    }
+               });
+
+               const activeApp = existingApps.find(app => {
+                    // Logic to determine if application is active:
+                    // It's active if it exists AND (is pending OR approved)
+                    // If no documents yet, it's pending (semi-active)
+                    const statuses = app.LicenseApplication.map(d => d.status);
+                    if (statuses.length === 0) return true; // Just created, still active/pending
+                    const isRejected = statuses.some(s => s === 'REJECTED');
+                    return !isRejected; // Not rejected means it's pending or approved
+               });
+
+               if (activeApp) {
+                    return { success: false, error: `Your company already has an active application or approved license for "${data.name}".` };
+               }
+          }
+
           const res = await prisma.application.create({ data });
           if (res) await revalidateApplication();
           return { success: true, data: res };
