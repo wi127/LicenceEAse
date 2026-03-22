@@ -1,10 +1,7 @@
 import { getSessionUser } from '@/action/User'
 import WebFooter from '@/components/WebFooter'
-import WebNavbar from '@/components/WebNavbar'
-import TawkLiveChat from '@/features/accounts/components/TawkLiveChat'
 import React, { PropsWithChildren } from 'react'
 import { AuthProvider } from '@/context/AuthContext'
-import { redirect } from 'next/navigation'
 
 export const metadata = {
   title: "LicenseEase",
@@ -20,7 +17,6 @@ export default async function WebLayout({ children }: PropsWithChildren) {
           {children}
         </div>
         <WebFooter />
-        <TawkLiveChat />
       </AuthProvider>
     </>
   )
