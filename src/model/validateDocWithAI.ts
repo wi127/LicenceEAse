@@ -4,101 +4,223 @@ import prisma from "@/lib/prisma";
 import { runOCROnPDFBuffer } from "./runOCR";
 import { validateTemplateWithLLM } from "./validateTemplateLLM";
 import { fetchRequiredDocumentById } from "@/action/RequiredDocument";
-import { RURA_REGULATIONS } from "./template";
 
-export async function validateDocWithAI(docId: string, options = { updateApplicationDocument: true }) {
-    // 1. Fetch document and explicitly include Company and Application data
-    const requiredDoc: any = await prisma.requiredDocument.findUnique({
-        where: { id: docId },
-        include: { 
-            company: true,
-            applications: true // This ensures application data is available
-        }
+/**
+ OCR numeric normalization
+ Fix common Tesseract mistakes
+*/
+function normalizeOCRNumbers(text: string) {
+  return text
+    .replace(/O/g, "0")
+    .replace(/I/g, "1")
+    .replace(/L/g, "1")
+    .replace(/B/g, "8")
+    .replace(/S/g, "5");
+}
+
+export async function validateDocWithAI(
+  docId: string,
+  options = { updateApplicationDocument: true }
+) {
+
+  const requiredDoc = await fetchRequiredDocumentById(docId, {
+    id: true,
+    name: true,
+    documentType: true,
+    file: true,
+    companyId: true
+  });
+
+  if (!requiredDoc) {
+    throw new Error(`Required document not found: ${docId}`);
+  }
+
+  const ocrText = await runOCROnPDFBuffer(
+    requiredDoc.file as Buffer,
+    "application/pdf"
+  );
+
+  const cleanOcr = ocrText.toUpperCase();
+
+  let validationResult: any = {
+    status: "REJECTED",
+    confidence: 0,
+    reasons: []
+  };
+
+  let skipAI = false;
+
+  /**
+   ========================================
+   RDB CERTIFICATE VALIDATION
+   ========================================
+   */
+
+  if (requiredDoc.documentType === "RDB_CERTIFICATE") {
+
+    const company = await prisma.company.findUnique({
+      where: { id: requiredDoc.companyId },
+      select: { name: true, TIN: true }
     });
 
-    if (!requiredDoc) throw new Error(`Required document not found: ${docId}`);
+    if (!company) throw new Error("Company not found");
 
-    const ocrText = await runOCROnPDFBuffer(requiredDoc.file as Buffer, "application/pdf");
-    const cleanOcr = ocrText.toUpperCase();
-    
-    // Use the application name (e.g., "Network Service Provider") as the RURA category
-    const category = requiredDoc.applications?.name || "Application Service Provider";
+    const dbTIN = company.TIN.replace(/\s/g, "");
 
-    let validationResult: any = { status: "REJECTED", confidence: 0, reasons: [] };
-    let localPassed = false;
-    let regulatoryEvidence: string[] = [];
+    /**
+     Normalize OCR numbers
+    */
+    const normalizedOCR = normalizeOCRNumbers(cleanOcr);
 
-    // --- 2. REGULATORY FUZZY MATCH (The "Receptionist" Logic) ---
-    const categoryKeywords = RURA_REGULATIONS[category] || [];
-    const matchedKeywords = categoryKeywords.filter(kw => cleanOcr.includes(kw));
-    
-    // We expect at least 2 key regulatory markers to prove categorical match
-    const hasCategoryProof = matchedKeywords.length >= 2;
-    if (hasCategoryProof) {
-        regulatoryEvidence.push(`RURA Check: Verified ${matchedKeywords.join(", ")} for ${category}`);
+    /**
+     Extract exactly 9-digit Company Code
+    */
+    const tinMatch = normalizedOCR.match(/\b\d{9}\b/);
+
+    const extractedTIN = tinMatch ? tinMatch[0] : null;
+
+    if (!extractedTIN) {
+
+      validationResult = {
+        status: "REJECTED",
+        confidence: 0.9,
+        reasons: [
+          "Company Code not detected or invalid format (must be exactly 9 digits)"
+        ]
+      };
+
+      skipAI = true;
+
+    } else if (extractedTIN.length !== 9) {
+
+      validationResult = {
+        status: "REJECTED",
+        confidence: 1,
+        reasons: [
+          "Company Code must contain exactly 9 digits"
+        ]
+      };
+
+      skipAI = true;
+
+    } else if (extractedTIN !== dbTIN) {
+
+      validationResult = {
+        status: "REJECTED",
+        confidence: 1,
+        reasons: [
+          `Company Code mismatch. Certificate: ${extractedTIN}, Database: ${dbTIN}`
+        ]
+      };
+
+      skipAI = true;
+
+    } else {
+
+      validationResult = {
+        status: "APPROVED",
+        confidence: 1,
+        reasons: [
+          "Certificate verified: Company Code matches database"
+        ]
+      };
+
+      skipAI = true;
+
+      console.log("Certificate validated locally using Company Code.");
     }
+  }
 
-    // --- 3. DYNAMIC FUZZY MATCH (RDB Certificate) ---
-    if (requiredDoc.documentType === 'RDB_CERTIFICATE') {
-        const headerKeywords = ["RWANDA", "DEVELOPMENT BOARD", "REGISTRAR"];
-        const foundHeaderCount = headerKeywords.filter(word => cleanOcr.includes(word)).length;
+  /**
+   ========================================
+   BUSINESS PLAN VALIDATION
+   ========================================
+   */
 
-        const expectedName = requiredDoc.company?.name?.toUpperCase() || "";
-        const expectedTIN = requiredDoc.company?.TIN || "";
-        
-        const nameMatch = expectedName && cleanOcr.includes(expectedName.split(' ')[0]); 
-        const codeMatch = expectedTIN && cleanOcr.includes(expectedTIN);
+  if (!skipAI && requiredDoc.documentType === "BUSINESS_PLAN") {
 
-        if (foundHeaderCount >= 2 && nameMatch && codeMatch) {
-            localPassed = true;
-            console.log(`Dynamic Match Success: ${expectedName}`);
-        }
+    const keywords = [
+      "UPTIME",
+      "EMERGENCY SERVICE PLAN",
+      "TIME TO REPAIR"
+    ];
+
+    const found = keywords.filter(word =>
+      cleanOcr.includes(word)
+    );
+
+    if (found.length >= 2) {
+
+      validationResult = {
+        status: "APPROVED",
+        confidence: 0.9,
+        reasons: [
+          "Business plan validated using regulatory keywords"
+        ]
+      };
+
+      skipAI = true;
+
+      console.log("Business plan passed keyword validation.");
     }
+  }
+
+  /**
+   ========================================
+   AI VALIDATION FALLBACK
+   ========================================
+   */
+
+  if (!skipAI) {
 
     try {
-        // 4. Pass category to the updated AI function
-        validationResult = await validateTemplateWithLLM(ocrText, requiredDoc.documentType, category);
-        
-        // Categorical enforcement: Reject if document doesn't match the applied category
-        if (!hasCategoryProof && requiredDoc.documentType !== 'RDB_CERTIFICATE') {
-            validationResult.status = "REJECTED";
-            validationResult.reasons.push(`CATEGORICAL MISMATCH: No ${category} evidence found.`);
-        }
 
-        if (localPassed) {
-            validationResult.status = "APPROVED";
-            validationResult.templateMatch = true;
-            validationResult.confidence = 1.0;
-            validationResult.reasons = [...(validationResult.reasons || []), "Verified via Dynamic Local Match", ...regulatoryEvidence];
-        }
-    } catch (err: any) {
-        if (localPassed) {
-            validationResult = { 
-                status: "APPROVED", 
-                templateMatch: true, 
-                confidence: 0.9, 
-                reasons: ["AI Error: Fallback to Local Proof"] 
-            };
-        } else {
-            throw err;
-        }
+      validationResult = await validateTemplateWithLLM(
+        ocrText,
+        requiredDoc.documentType
+      );
+
+    } catch (err) {
+
+      console.error("AI validation failed:", err);
+
+      validationResult = {
+        status: "REJECTED",
+        confidence: 0,
+        reasons: ["AI validation failed"]
+      };
     }
+  }
 
-    const finalStatus = (validationResult.status === "APPROVED") ? "APPROVED" : "REJECTED";
+  const finalStatus =
+    validationResult.status === "APPROVED"
+      ? "APPROVED"
+      : "REJECTED";
 
-    if (options.updateApplicationDocument) {
-        await prisma.applicationDocument.updateMany({
-            where: { requiredDocumentId: docId },
-            data: {
-                status: finalStatus,
-                extractedJson: validationResult.extracted || {},
-                reason: (validationResult.reasons || []).join("; "),
-                confidence: validationResult.confidence,
-                rawOcrText: ocrText.slice(0, 5000),
-                updatedAt: new Date(),
-            }
-        });
-    }
+  /**
+   ========================================
+   DATABASE UPDATE
+   ========================================
+   */
 
-    return { docId, finalStatus, validationResult };
+  if (options.updateApplicationDocument) {
+
+    await prisma.applicationDocument.updateMany({
+      where: { requiredDocumentId: docId },
+      data: {
+        status: finalStatus,
+        extractedJson: validationResult.extracted || {},
+        reason: (validationResult.reasons || []).join("; "),
+        confidence: validationResult.confidence,
+        rawOcrText: ocrText.slice(0, 5000),
+        updatedAt: new Date()
+      }
+    });
+  }
+
+  return {
+    docId,
+    finalStatus,
+    validationResult
+  };
 }
