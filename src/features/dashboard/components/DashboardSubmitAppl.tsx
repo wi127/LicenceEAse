@@ -44,7 +44,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 500000,
+        application: 50000,
+        license: 400000,
         renewal: 350000
       },
       validityMonths: 2
@@ -64,7 +65,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 600000,
+        application: 50000,
+        license: 500000,
         renewal: 400000
       },
       validityMonths: 2
@@ -84,7 +86,8 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 400000,
+        application: 50000,
+        license: 600000,
         renewal: 250000
       },
       validityMonths: 3
@@ -373,6 +376,11 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
                 <span className="text-blue-600 font-medium">Validity:</span>
                 <br />
                 <span className="text-blue-800">{selectedCategory.validityMonths} years</span>
+              </div>
+              <div>
+                <span className="text-blue-600 font-medium">License Fee:</span>
+                <br />
+                <span className="text-blue-800">{selectedCategory.fees.license?.toLocaleString() || 0} rwf({(selectedCategory.fees.license || 0) / 1000}k)</span>
               </div>
             </div>
           </div>

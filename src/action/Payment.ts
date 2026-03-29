@@ -66,6 +66,25 @@ export async function updatePayment(id: string, data: Prisma.PaymentUpdateInput)
                     read: false,
                     status: "UNREAD"
                });
+
+               // Automatically approve pending application documents associated with this payment
+               await prisma.applicationDocument.updateMany({
+                   where: {
+                       applicationId: res.applicationId,
+                       status: "PENDING"
+                   },
+                   data: {
+                       status: "APPROVED"
+                   }
+               });
+               
+               await createNotification({
+                    user: { connect: { id: res.userId } },
+                    type: "APPLICATION_STATUS",
+                    message: `Your application "${res.application?.name || 'Application'}" has been automatically approved following successful payment.`,
+                    read: false,
+                    status: "UNREAD"
+               });
           }
 
           return res;
