@@ -44,7 +44,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 50000,
+        application: 500000,
         renewal: 350000
       },
       validityMonths: 2
@@ -64,7 +64,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 50000,
+        application: 600000,
         renewal: 400000
       },
       validityMonths: 2
@@ -84,7 +84,7 @@ export default function DashboardSubmitApplication({ companyId, applicationId }:
       ],
       processingTime: 5,
       fees: {
-        application: 50000,
+        application: 400000,
         renewal: 250000
       },
       validityMonths: 3

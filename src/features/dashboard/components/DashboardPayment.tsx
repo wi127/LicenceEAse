@@ -196,7 +196,7 @@ export default function Payment() {
     phoneNumber: ''
   })
 
-  // Currency exchange rates (USD as base)
+  // Currency exchange rates (RWF as base)
   const exchangeRates: { [key: string]: number } = {
     USD: 0.00076,
     EUR: 0.0007,
@@ -244,9 +244,9 @@ export default function Payment() {
     }
   }, [searchParams]);
 
-  // Convert amount from USD to selected currency
-  const convertAmount = (amountInUSD: number) => {
-    return amountInUSD * exchangeRates[selectedCurrency]
+  // Convert amount from RWF to selected currency
+  const convertAmount = (amountInBaseCurrency: number) => {
+    return amountInBaseCurrency * exchangeRates[selectedCurrency]
   }
 
   // Format currency display
@@ -445,9 +445,9 @@ export default function Payment() {
     )
   }
 
-  const totalAmountUSD = application.applicationFee
-  const totalAmountSelected = convertAmount(totalAmountUSD)
-  const totalAmountRWF = totalAmountUSD * exchangeRates.RWF
+  const totalAmountBaseRWF = application.applicationFee
+  const totalAmountSelected = convertAmount(totalAmountBaseRWF)
+  const totalAmountRWF = totalAmountBaseRWF * exchangeRates.RWF
 
   return (
     <Elements stripe={stripePromise}>
@@ -465,7 +465,7 @@ export default function Payment() {
         isProcessing={isProcessing}
         handlePayment={handleStripePayment}
         handleMobileMoneyPayment={handleMobileMoneyPayment}
-        totalAmountUSD={totalAmountUSD}
+        totalAmountBaseRWF={totalAmountBaseRWF}
         totalAmountSelected={totalAmountSelected}
         totalAmountRWF={totalAmountRWF}
         currencies={currencies}
@@ -480,7 +480,7 @@ export default function Payment() {
 function PaymentPageContent({
   application, user, message, setMessage, selectedCurrency, setSelectedCurrency,
   paymentMethod, setPaymentMethod, paymentForm, handleInputChange, isProcessing,
-  handlePayment, handleMobileMoneyPayment, totalAmountUSD, totalAmountSelected,
+  handlePayment, handleMobileMoneyPayment, totalAmountBaseRWF, totalAmountSelected,
   totalAmountRWF, currencies, formatCurrency, convertAmount, router
 }: any) {
   const stripe = useStripe();
