@@ -1,21 +1,80 @@
-export const RURA_REGULATIONS: Record<string, string[]> = {
+// template.ts
+
+export interface KeywordRule {
+    keyword: string;
+    variations: string[];
+    required: boolean;
+}
+
+export const RURA_REGULATIONS: Record<string, KeywordRule[]> = {
+
     "Network Service Provider": [
-        "99.9% UPTIME",
-        "EMERGENCY SERVICE PLAN",
-        "TIME TO REPAIR",
-        "INTERNET CAPACITY"
+        {
+            keyword: "UPTIME",
+            variations: ["99.9% uptime", "availability", "service availability"],
+            required: true
+        },
+        {
+            keyword: "EMERGENCY SERVICE PLAN",
+            variations: ["emergency service plan", "disaster recovery", "incident escalation"],
+            required: true
+        },
+        {
+            keyword: "TIME TO REPAIR",
+            variations: ["time to repair", "TTR", "fault restoration"],
+            required: true
+        },
+        {
+            keyword: "INTERNET CAPACITY",
+            variations: ["internet capacity", "bandwidth", "upstream provider"],
+            required: false
+        }
     ],
+
     "Network Infrastructure": [
-        "48-CORE FIBRE",
-        "CELL ON WHEELS",
-        "PASSIVE INVENTORY",
-        "TOWER"
+        {
+            keyword: "48-CORE FIBRE",
+            variations: ["48-core fibre", "fiber backbone", "optical fibre"],
+            required: true
+        },
+        {
+            keyword: "CELL ON WHEELS",
+            variations: ["cell on wheels", "mobile base station"],
+            required: false
+        },
+        {
+            keyword: "PASSIVE INVENTORY",
+            variations: ["passive inventory", "network assets"],
+            required: true
+        },
+        {
+            keyword: "TOWER",
+            variations: ["tower", "telecom mast"],
+            required: true
+        }
     ],
+
     "Application Service Provider": [
-        "SYSTEM ARCHITECTURE",
-        "SECURITY COMPLIANCE",
-        "VALUE PROPOSITION",
-        "SOFTWARE"
+        {
+            keyword: "SYSTEM ARCHITECTURE",
+            variations: ["system architecture", "cloud architecture", "platform design"],
+            required: true
+        },
+        {
+            keyword: "SECURITY COMPLIANCE",
+            variations: ["security compliance", "data protection", "encryption"],
+            required: true
+        },
+        {
+            keyword: "VALUE PROPOSITION",
+            variations: ["value proposition", "competitive advantage"],
+            required: false
+        },
+        {
+            keyword: "SOFTWARE",
+            variations: ["software", "application platform"],
+            required: true
+        }
     ]
 };
 
@@ -28,11 +87,11 @@ Required sections (order required):
 3. FINANCIALS
 
 Rules:
-- Section titles must match exactly.
-- Category Check: Content must include at least 50% of the RURA keywords for the selected License Category.
-- Business ID format as TIN number: 6-20 alphanumeric characters.
+- Section titles must approximately match.
+- Business ID format as TIN number: Exactly 9 digits.
 - Issue Date format: YYYY-MM-DD.
 `,
+
     RDB_CERTIFICATE: `
 Template: RDB_CERTIFICATE v1
 Required sections (order required):
@@ -48,6 +107,7 @@ Rules:
 - "ID Document" number must be 16 characters.
 - Verification must contain the serial number and the rdb.rw validity link.
 `,
+
     COMPANY_CONTRACT: `
 Template: COMPANY_CONTRACT v1
 Required sections (order required):
@@ -58,9 +118,10 @@ Required sections (order required):
 Regulatory Rule:
 - Terms must reflect the SLA and technical obligations for the specific license category.
 `,
+
     OTHER_DOCUMENT: `
 Template: GENERIC_DOCUMENT v1
 Rules:
-- Lighter checks: must contain "Business Name" and "Business ID or TIN Number".
+- Must contain "Business Name" and "Business ID or TIN Number".
 `,
 };
